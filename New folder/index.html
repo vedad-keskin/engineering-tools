@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Tools</title>
+<link rel="stylesheet" href="assets/css/shared.css">
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">
+    <div class="mark">ET</div>
+    <div>
+      <div class="title">Engineering Tools</div>
+      <div class="sub">Client-side calculation toolkit</div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+    <h2>Electrical design calculators</h2>
+    <div class="desc" style="margin-bottom:0;">A small toolkit of standalone, client-side calculators for LV electrical design. Pick a tool below &mdash; everything runs in your browser, nothing is uploaded anywhere.</div>
+  </div>
+
+  <div class="tool-grid">
+    <a class="tool-card" href="calculators/lv-cable-sizing/index.html">
+      <div class="tool-card-top">
+        <h3>LV Cable Sizing Calculator</h3>
+        <span class="badge ok">Available</span>
+      </div>
+      <div class="desc">Size LV feeders per IEC 60364: ampacity, derating, voltage drop, earth-fault-loop checks.</div>
+    </a>
+
+    <a class="tool-card" href="calculators/capacity-planner/index.html">
+      <div class="tool-card-top">
+        <h3>Capacity Planner</h3>
+        <span class="badge ok">Available</span>
+      </div>
+      <div class="desc">Build a supply hierarchy (utility &rarr; transformers &rarr; UPS &rarr; panels &rarr; loads), roll up demand, and check equipment utilisation.</div>
+    </a>
+
+    <a class="tool-card" href="calculators/block-diagram/index.html">
+      <div class="tool-card-top">
+        <h3>Block Diagram Builder</h3>
+        <span class="badge ok">Available</span>
+      </div>
+      <div class="desc">Build a supply network and switch to a visual block diagram: drag symbols, reconnect feeds by click, dual-feed P/R labels, dashed redundant paths, and SVG/PNG export.</div>
+    </a>
+
+    <a class="tool-card" href="calculators/network-diagram/index.html">
+      <div class="tool-card-top">
+        <h3>Network Diagram Builder</h3>
+        <span class="badge ok">Available</span>
+      </div>
+      <div class="desc">Build a supply network (same table-based workflow as Capacity Planner) and get an auto-laid-out single-line block diagram alongside it: drag-to-reposition symbols, draw connections by hand, P/R and HV/LV labelling, undo/redo, autosave, and SVG/PNG/report export.</div>
+    </a>
+
+    <a class="tool-card" href="calculators/earthing-cable-calculator/index.html">
+      <div class="tool-card-top">
+        <h3>Earthing Cable Calculator</h3>
+        <span class="badge warn">Coming soon</span>
+      </div>
+      <div class="desc">Size earthing / grounding conductors and verify fault-withstand requirements.</div>
+    </a>
+
+    <a class="tool-card" href="calculators/lightning-risk-assessment/index.html">
+      <div class="tool-card-top">
+        <h3>Lightning Risk Assessment</h3>
+        <span class="badge ok">Available</span>
+      </div>
+      <div class="desc">IEC 62305-2:2010 component-based lightning protection risk assessment (RA, RB, RC, RM &rarr; R1/R2/R3) versus tolerable thresholds for human life, service, and cultural heritage.</div>
+    </a>
+
+    <a class="tool-card" href="calculators/pue-calculator/index.html">
+      <div class="tool-card-top">
+        <h3>Building PUE Calculator</h3>
+        <span class="badge warn">Coming soon</span>
+      </div>
+      <div class="desc">Estimate data centre / building Power Usage Effectiveness from load inputs.</div>
+    </a>
+  </div>
+</main>
+
+<footer class="hint-footer">All calculators run entirely client-side &middot; nothing is uploaded.</footer>
+
+<script src="assets/js/shared.js"></script>
+<script>initEmbeddedPreviewBanner();</script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+// ============================================================
+// Reference data extracted from RHDHV_-_LV_Cable_Calc_v1.xlsx
+// Sheets: names, reference, cable data, DataForExcelRevit
+// ============================================================
+
+const ENUMS = {
+  voltage: [400, 230],
+  installationPlace: ['Air', 'Ground'],
+  installationArea: ['Indoor', 'Outdoor'],
+  conductorMaterial: ['CU', 'AL'],
+  insulation: ['XLPE', 'PVC'],
+  armour: ['SWA', '-'],
+  outerSheath: ['PVC', 'LSZH', 'FRLS'],
+  noCores: [1, 3, 4, 5],
+  cableSize: [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400, 500, 630],
+  breakerRating: [6, 10, 13, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 320, 400, 500, 630,
+    800, 1000, 1250, 1600, 2000, 2500, 3200, 4000, 5000, 6300],
+  pdTripTypeWide: ['Thermal', 'Electronic'], // when breaker rating > 20A
+  pdTripTypeNarrow: ['Thermal'],             // when breaker rating <= 20A
+  pdTripSettingType: ['Fixed', 'Var'],
+  tripCurve: ['B', 'C', 'D', 'N.A.'],
+  airInstallationBunched: ['Non-perforated cable tray', 'Perforated cable tray', 'Cable ladder'],
+  airInstallationNonBunched: ['Non-perforated cable tray', 'Perforated cable tray', 'Cable ladder'],
+  groundInstallation: ['Directly buried', 'In duct'],
+  spacing: ['Touching', 'Spaced'],
+};
+
+// Air ambient temperature derating factor vs temperature (deg C), for PVC and XLPE.
+// Excel VLOOKUP with approximate(ascending) match -> use "floor to nearest <= key" lookup.
+const AIR_TEMP_DERATE = [
+  // [tempC, PVC, XLPE]
+  [0,1.32,1.21],[1,1.31,1.204],[2,1.3,1.198],[3,1.29,1.192],[4,1.28,1.186],[5,1.27,1.18],
+  [6,1.26,1.174],[7,1.25,1.168],[8,1.24,1.162],[9,1.23,1.156],[10,1.22,1.15],[11,1.21,1.144],
+  [12,1.2,1.138],[13,1.19,1.132],[14,1.18,1.126],[15,1.17,1.12],[16,1.16,1.112],[17,1.15,1.104],
+  [18,1.14,1.096],[19,1.13,1.088],[20,1.12,1.08],[21,1.108,1.072],[22,1.096,1.064],[23,1.084,1.056],
+  [24,1.072,1.048],[25,1.06,1.04],[26,1.048,1.032],[27,1.036,1.024],[28,1.024,1.016],[29,1.012,1.008],
+  [30,1,1],[31,0.988,0.992],[32,0.976,0.984],[33,0.964,0.976],[34,0.952,0.968],[35,0.94,0.96],
+  [36,0.926,0.95],[37,0.912,0.94],[38,0.898,0.93],[39,0.884,0.92],[40,0.87,0.91],[41,0.854,0.902],
+  [42,0.838,0.894],[43,0.822,0.886],[44,0.806,0.878],[45,0.79,0.87],[46,0.774,0.86],[47,0.758,0.85],
+  [48,0.742,0.84],[49,0.726,0.83],[50,0.71,0.82],[51,0.69,0.808],[52,0.67,0.796],[53,0.65,0.784],
+  [54,0.63,0.772],[55,0.61,0.76],[56,0.588,0.75],[57,0.566,0.74],[58,0.544,0.73],[59,0.522,0.72],
+  [60,0.5,0.71],[61,null,0.698],[62,null,0.686],[63,null,0.674],[64,null,0.662],[65,null,0.65],
+  [66,null,0.636],[67,null,0.622],[68,null,0.608],[69,null,0.594],[70,null,0.58],[71,null,0.564],
+  [72,null,0.548],[73,null,0.532],[74,null,0.516],[75,null,0.5],[76,null,0.482],[77,null,0.464],
+  [78,null,0.446],[79,null,0.428],[80,null,0.41],
+];
+
+// Soil temperature derating factor vs temperature (deg C), for PVC and XLPE.
+const SOIL_TEMP_DERATE = [
+  [0,1.2,1.13],[1,1.19,1.124],[2,1.18,1.118],[3,1.17,1.112],[4,1.16,1.106],[5,1.15,1.1],
+  [6,1.14,1.094],[7,1.13,1.088],[8,1.12,1.082],[9,1.11,1.076],[10,1.1,1.07],[11,1.09,1.064],
+  [12,1.08,1.058],[13,1.07,1.052],[14,1.06,1.046],[15,1.05,1.04],[16,1.04,1.032],[17,1.03,1.024],
+  [18,1.02,1.016],[19,1.01,1.008],[20,1,1],[21,0.99,0.992],[22,0.98,0.984],[23,0.97,0.976],
+  [24,0.96,0.968],[25,0.95,0.96],[26,0.938,0.954],[27,0.926,0.948],[28,0.914,0.942],[29,0.902,0.936],
+  [30,0.89,0.93],[31,0.88,0.922],[32,0.87,0.914],[33,0.86,0.906],[34,0.85,0.898],[35,0.84,0.89],
+  [36,0.826,0.882],[37,0.812,0.874],[38,0.798,0.866],[39,0.784,0.858],[40,0.77,0.85],[41,0.758,0.84],
+  [42,0.746,0.83],[43,0.734,0.82],[44,0.722,0.81],[45,0.71,0.8],[46,0.694,0.792],[47,0.678,0.784],
+  [48,0.662,0.776],[49,0.646,0.768],[50,0.63,0.76],[51,0.614,0.75],[52,0.598,0.74],[53,0.582,0.73],
+  [54,0.566,0.72],[55,0.55,0.71],[56,0.53,0.698],[57,0.51,0.686],[58,0.49,0.674],[59,0.47,0.662],
+  [60,0.45,0.65],[61,null,0.64],[62,null,0.63],[63,null,0.62],[64,null,0.61],[65,null,0.6],
+  [66,null,0.586],[67,null,0.572],[68,null,0.558],[69,null,0.544],[70,null,0.53],[71,null,0.516],
+  [72,null,0.502],[73,null,0.488],[74,null,0.474],[75,null,0.46],[76,null,0.444],[77,null,0.428],
+  [78,null,0.412],[79,null,0.396],[80,null,0.38],
+];
+
+// Soil thermal resistivity derating factor (rated for 240mm2 multicore), for Direct buried and In duct.
+const SOIL_RESIST_DERATE = [
+  // [resistivity, directBuried, inDuct]
+  [0.7,1.2,1.09],[0.8,1.15,1.07],[0.9,1.1,1.05],[1,1.07,1.03],[1.2,1,1],[1.5,0.92,0.95],
+  [2,0.81,0.89],[2.5,0.74,0.84],[3,0.69,0.79],[3.5,0.63,0.76],[4,0.59,0.72],
+];
+
+// Above-ground grouping derating factors, fixed reference cells used by the workbook
+// (the workbook always reads the "5 grouped cables / 1 layer / touching" column
+// regardless of the Max Layers / Max Grouped Cables inputs - replicated as-is).
+const GROUPING_DERATE = {
+  bunched: { // <=25mm^2
+    indoor:  { 'Non-perforated cable tray': 0.70, 'Perforated cable tray': 0.73, 'Cable ladder': 0.76 },
+    outdoor: { 'Non-perforated cable tray': 0.70, 'Perforated cable tray': 0.73, 'Cable ladder': 0.76 },
+  },
+  nonBunched: { // >25mm^2
+    indoor:  { 'Non-perforated cable tray': 0.70, 'Perforated cable tray': 0.73, 'Cable ladder': 0.76 },
+    outdoor: { 'Non-perforated cable tray': 0.73, 'Perforated cable tray': 0.76, 'Cable ladder': 0.79 },
+  },
+  underground: { 'Directly buried': 0.65, 'In duct': 0.75 },
+};
+
+// PE (protective earth) conductor size vs power conductor size ("ECC cable selection" table)
+const PE_SIZE_TABLE = {
+  1.5:1.5, 2.5:2.5, 4:4, 6:6, 10:10, 16:16, 25:16, 35:16, 50:25, 70:35, 95:50,
+  120:70, 150:70, 185:95, 240:120, 300:150, 400:240, 500:240, 630:300,
+};
+
+// Cable ampacity + diameter table ("cable data" sheet, rows D6:V92), keyed by "<cores><size>"
+// where size uses a comma for decimals (matches the workbook's locale-based concatenation).
+// Columns: air/ground ampacity for CU-PVC / AL-PVC / CU-XLPE / AL-XLPE, each Armoured (SWA) and Unarmoured (-),
+// plus armoured & unarmoured overall cable diameter (mm).
+function k(cores, size) {
+  const sizeStr = (size % 1 !== 0) ? String(size).replace('.', ',') : String(size);
+  return `${cores}${sizeStr}`;
+}
+
+const CABLE_DATA = {}; // key -> {armoured:{cuPvcAir,cuPvcGnd,alPvcAir,alPvcGnd,cuXlpeAir,cuXlpeGnd,alXlpeAir,alXlpeGnd,dia},
+                         //         unarmoured:{...same 8..., dia}}
+
+const CABLE_ROWS = [
+  // cores, size, [E cuPvcArmAir, F cuPvcArmGnd, G alPvcArmAir, H alPvcArmGnd, I cuXlpeArmAir, J cuXlpeArmGnd,
+  //  K alXlpeArmAir, L alXlpeArmGnd, M diaArm, N cuPvcUnAir, O cuPvcUnGnd, P alPvcUnAir, Q alPvcUnGnd,
+  //  R cuXlpeUnAir, S cuXlpeUnGnd, T alXlpeUnAir, U alXlpeUnGnd, V diaUn]
+  [5,1.5,[18,26,null,null,24,30,null,null,13,18,26,null,null,24,30,null,null,11]],
+  [5,2.5,[25,34,null,null,32,40,null,null,14.5,25,34,null,null,32,40,null,null,12.5]],
+  [5,4,[34,44,null,null,42,52,null,null,15.3,34,44,null,null,42,52,null,null,14.5]],
+  [5,6,[43,56,null,null,53,64,null,null,17.2,43,56,null,null,53,64,null,null,16]],
+  [5,10,[60,75,null,null,73,86,null,null,20.5,60,75,null,null,73,86,null,null,19]],
+  [5,16,[80,98,null,null,96,111,null,null,24.5,80,98,null,null,96,111,null,null,23]],
+  [5,25,[106,128,null,null,130,143,null,null,30.1,106,128,null,null,130,143,null,null,28]],
+
+  [4,1.5,[18,26,null,null,24,30,null,null,14.5,18.5,26,null,null,24,30,null,null,12]],
+  [4,2.5,[25,34,null,null,32,40,null,null,15.5,25,34,null,null,32,40,null,null,14]],
+  [4,4,[34,44,null,null,42,52,null,null,18.5,34,44,null,null,42,52,null,null,15]],
+  [4,6,[43,56,null,null,53,64,null,null,19.5,43,56,null,null,53,64,null,null,17]],
+  [4,10,[60,75,null,null,73,86,null,null,21,60,75,null,null,73,86,null,null,19]],
+  [4,16,[80,98,50,71,96,111,54,76,26,80,98,50,71,96,111,54,76,22]],
+  [4,25,[106,128,66,89,130,143,71,95,29,106,128,66,89,130,143,71,95,26]],
+  [4,35,[131,157,81,107,160,173,88,114,32,131,157,81,107,160,173,88,114,28]],
+  [4,50,[159,185,100,128,195,205,108,137,38,159,185,100,128,195,205,108,137,32]],
+  [4,70,[202,228,125,156,247,252,136,167,42,202,228,125,156,247,252,136,167,37]],
+  [4,95,[244,275,155,188,305,303,169,200,48,244,275,155,188,305,303,169,200,42]],
+  [4,120,[282,313,180,216,355,346,198,229,53,282,313,180,216,355,346,198,229,46]],
+  [4,150,[324,353,204,240,407,390,225,255,57,324,353,204,240,407,390,225,255,51]],
+  [4,185,[371,399,235,272,469,441,260,290,63,371,399,235,272,469,441,260,290,55]],
+  [4,240,[436,464,279,316,551,511,310,338,70,436,464,279,316,551,511,310,338,63]],
+  [4,300,[481,524,319,355,638,580,353,378,77,481,524,319,355,638,580,353,378,70]],
+  [4,400,[560,600,376,408,746,663,414,433,87,560,600,376,408,746,663,414,433,78]],
+
+  [3,1.5,[18,26,null,null,24,30,null,null,13.5,18.5,26,null,null,24,30,null,null,11]],
+  [3,2.5,[25,34,null,null,32,40,null,null,14.5,25,34,null,null,32,40,null,null,12]],
+  [3,4,[34,44,null,null,42,52,null,null,15,34,44,null,null,42,52,null,null,13]],
+  [3,6,[43,56,null,null,53,64,null,null,16.5,43,56,null,null,53,64,null,null,14]],
+  [3,10,[60,75,null,null,73,86,null,null,18.5,60,75,null,null,73,86,null,null,16]],
+  [3,16,[80,98,50,71,96,111,54,76,21,80,98,50,71,96,111,54,76,18]],
+  [3,25,[106,128,66,89,130,143,71,95,26,106,128,66,89,130,143,71,95,22]],
+  [3,35,[131,157,81,107,160,173,88,114,28,131,157,81,107,160,173,88,114,24]],
+  [3,50,[159,185,100,128,195,205,108,137,31,159,185,100,128,195,205,108,137,27]],
+  [3,70,[202,228,125,156,247,252,136,167,36,202,228,125,156,247,252,136,167,31]],
+  [3,95,[244,275,155,188,305,303,169,200,41,244,275,155,188,305,303,169,200,35]],
+  [3,120,[282,313,180,216,355,346,198,229,45,282,313,180,216,355,346,198,229,39]],
+  [3,150,[324,353,204,240,407,390,225,255,50,324,353,204,240,407,390,225,255,43]],
+  [3,185,[371,399,235,272,469,441,260,290,55,371,399,235,272,469,441,260,290,48]],
+  [3,240,[436,464,279,316,551,511,310,338,61,436,464,279,316,551,511,310,338,54]],
+  [3,300,[481,524,319,355,638,580,353,378,67,481,524,319,355,638,580,353,378,60]],
+  [3,400,[560,600,376,408,746,663,414,433,74,560,600,376,408,746,663,414,433,67]],
+
+  [2,1.5,[20,29,null,null,21,32,null,null,13.2,20,32,null,null,21,32,null,null,11]],
+  [2,2.5,[27,38,null,null,28,41,null,null,14.2,27,42,null,null,28,41,null,null,12]],
+  [2,4,[35,49,null,null,37,53,null,null,15.2,37,54,null,null,37,53,null,null,13]],
+  [2,6,[45,61,null,null,47,66,null,null,16.4,48,68,null,null,47,66,null,null,14]],
+  [2,10,[62,81,null,null,63,87,null,null,18,66,90,null,null,63,87,null,null,16]],
+  [2,16,[81,104,59,81,84,113,65,88,20.9,89,116,59,81,84,113,65,88,19]],
+  [2,25,[108,133,78,104,113,146,87,113,24.3,118,150,78,104,113,146,87,113,22]],
+  [2,35,[130,160,95,124,137,174,106,135,27.8,145,181,95,124,137,174,106,135,24]],
+  [2,50,[154,188,114,146,165,205,128,159,30.9,176,215,114,146,165,205,128,159,28]],
+  [2,70,[194,230,143,179,206,251,161,196,34.7,224,264,143,179,206,251,161,196,31]],
+  [2,95,[238,275,175,214,254,301,198,234,39.9,271,318,175,214,254,301,198,234,35]],
+  [2,120,[273,312,201,243,293,341,228,266,43.5,314,360,201,243,293,341,228,266,39]],
+  [2,150,[309,348,228,271,332,381,259,297,47.3,361,106,228,271,332,381,259,297,42]],
+  [2,185,[353,392,262,307,380,428,298,335,53.1,412,458,262,307,380,428,298,335,46]],
+  [2,240,[414,451,308,355,447,494,351,388,58.7,484,537,308,355,447,494,351,388,53]],
+  [2,300,[468,503,348,397,506,552,399,435,63.7,null,null,348,397,506,552,399,435,null]],
+  [2,400,[539,566,405,454,578,619,462,495,70.7,null,null,405,454,578,619,462,495,null]],
+
+  [1,1.5,[null,null,null,null,null,null,null,null,null,21,32,null,null,23,34,null,null,6.7]],
+  [1,2.5,[null,null,null,null,null,null,null,null,null,28,42,null,null,31,45,null,null,7.1]],
+  [1,4,[null,null,null,null,null,null,null,null,null,38,55,null,null,41,58,null,null,7.6]],
+  [1,6,[null,null,null,null,null,null,null,null,null,48,69,null,null,52,73,null,null,8.2]],
+  [1,10,[null,null,null,null,null,null,null,null,null,66,91,null,null,71,97,null,null,8.9]],
+  [1,16,[null,null,null,null,null,null,null,null,null,88,118,68,92,95,125,73,81,10]],
+  [1,25,[null,null,null,null,null,null,null,null,null,117,152,91,118,127,161,98,105,11.6]],
+  [1,35,[null,null,null,null,null,null,null,null,null,144,183,112,142,156,194,121,134,12.7]],
+  [1,50,[186,215,146,167,222,235,162,175,18.8,190,215,136,167,209,230,159,175,14]],
+  [1,70,[232,262,184,206,285,290,207,220,20.6,242,262,173,206,270,285,206,215,15.8]],
+  [1,95,[284,312,224,245,346,345,252,260,22.7,301,312,215,245,330,335,253,255,17.9]],
+  [1,120,[327,350,258,276,402,390,292,295,24.4,352,350,250,276,385,385,296,295,19.6]],
+  [1,150,[368,387,292,307,463,435,337,330,26.8,405,387,287,307,445,435,343,325,21.6]],
+  [1,185,[416,430,333,344,529,490,391,375,29,470,430,333,344,511,490,395,370,23.6]],
+  [1,240,[483,486,390,392,625,560,465,435,31.7,565,486,400,392,606,570,471,430,26.5]],
+  [1,300,[541,533,440,435,720,630,540,490,34.1,653,533,461,435,701,650,544,490,28.9]],
+  [1,400,[595,568,497,476,815,700,625,540,38.8,769,568,546,476,820,740,638,550,32.4]],
+  [1,500,[659,614,561,525,918,770,714,580,42.4,901,614,641,525,936,840,743,620,36]],
+  [1,630,[726,660,642,578,1027,840,801,630,48.6,1080,660,778,578,1069,960,849,690,42.4]],
+];
+
+for (const [cores, size, vals] of CABLE_ROWS) {
+  const [cuPvcArmAir, cuPvcArmGnd, alPvcArmAir, alPvcArmGnd, cuXlpeArmAir, cuXlpeArmGnd, alXlpeArmAir, alXlpeArmGnd,
+    diaArm, cuPvcUnAir, cuPvcUnGnd, alPvcUnAir, alPvcUnGnd, cuXlpeUnAir, cuXlpeUnGnd, alXlpeUnAir, alXlpeUnGnd, diaUn] = vals;
+  CABLE_DATA[k(cores, size)] = {
+    armoured: { cuPvcAir: cuPvcArmAir, cuPvcGnd: cuPvcArmGnd, alPvcAir: alPvcArmAir, alPvcGnd: alPvcArmGnd,
+      cuXlpeAir: cuXlpeArmAir, cuXlpeGnd: cuXlpeArmGnd, alXlpeAir: alXlpeArmAir, alXlpeGnd: alXlpeArmGnd, dia: diaArm },
+    unarmoured: { cuPvcAir: cuPvcUnAir, cuPvcGnd: cuPvcUnGnd, alPvcAir: alPvcUnAir, alPvcGnd: alPvcUnGnd,
+      cuXlpeAir: cuXlpeUnAir, cuXlpeGnd: cuXlpeUnGnd, alXlpeAir: alXlpeUnAir, alXlpeGnd: alXlpeUnGnd, dia: diaUn },
+  };
+}
+
+// Resistance (ohm/km @90C for R, and reactance ohm/km @50Hz) vs nominal conductor size ("cable data" E95:K116)
+const CABLE_ELECTRICAL = {
+  1.5:  { rCu: 13.49779960707269, rAl: null,               xSingleXlpe: 0.155, xMultiXlpe: 0.107, xSinglePvc: 0.157, xMultiPvc: 0.111 },
+  2.5:  { rCu: 8.266007858546168, rAl: null,               xSingleXlpe: 0.141, xMultiXlpe: 0.0988, xSinglePvc: 0.413, xMultiPvc: 0.102 },
+  4:    { rCu: 5.142550098231827, rAl: null,               xSingleXlpe: 0.131, xMultiXlpe: 0.093, xSinglePvc: 0.137, xMultiPvc: 0.102 },
+  6:    { rCu: 3.4358035363457757, rAl: null,              xSingleXlpe: 0.123, xMultiXlpe: 0.0887, xSinglePvc: 0.128, xMultiPvc: 0.0967 },
+  10:   { rCu: 2.041402750491159, rAl: null,               xSingleXlpe: 0.114, xMultiXlpe: 0.084, xSinglePvc: 0.118, xMultiPvc: 0.0906 },
+  16:   { rCu: 1.2828487229862473, rAl: 2.1364274193548383, xSingleXlpe: 0.106, xMultiXlpe: 0.0805, xSinglePvc: 0.111, xMultiPvc: 0.0861 },
+  25:   { rCu: 0.8109834970530451, rAl: 1.3422580645161288, xSingleXlpe: 0.102, xMultiXlpe: 0.0808, xSinglePvc: 0.106, xMultiPvc: 0.0853 },
+  35:   { rCu: 0.5845328094302553, rAl: 0.9708999999999999, xSingleXlpe: 0.0982, xMultiXlpe: 0.0786, xSinglePvc: 0.101, xMultiPvc: 0.0826 },
+  50:   { rCu: 0.43170648330058936, rAl: 0.7169895161290322, xSingleXlpe: 0.0924, xMultiXlpe: 0.0751, xSinglePvc: 0.0962, xMultiPvc: 0.0797 },
+  70:   { rCu: 0.29895952848722984, rAl: 0.49551693548387094, xSingleXlpe: 0.0893, xMultiXlpe: 0.0741, xSinglePvc: 0.0917, xMultiPvc: 0.077 },
+  95:   { rCu: 0.21529548133595283, rAl: 0.3579354838709677, xSingleXlpe: 0.0868, xMultiXlpe: 0.0725, xSinglePvc: 0.0904, xMultiPvc: 0.0766 },
+  120:  { rCu: 0.17067465618860508, rAl: 0.28299274193548385, xSingleXlpe: 0.0844, xMultiXlpe: 0.0713, xSinglePvc: 0.087, xMultiPvc: 0.0743 },
+  150:  { rCu: 0.13832455795677798, rAl: 0.23042096774193543, xSingleXlpe: 0.0844, xMultiXlpe: 0.0718, xSinglePvc: 0.0868, xMultiPvc: 0.0745 },
+  185:  { rCu: 0.11054809430255401, rAl: 0.18344193548387094, xSingleXlpe: 0.0835, xMultiXlpe: 0.072, xSinglePvc: 0.0862, xMultiPvc: 0.0744 },
+  240:  { rCu: 0.08411025540275048, rAl: 0.13981854838709676, xSingleXlpe: 0.0818, xMultiXlpe: 0.0709, xSinglePvc: 0.0847, xMultiPvc: 0.0735 },
+  300:  { rCu: 0.06704278978388997, rAl: 0.11185483870967741, xSingleXlpe: 0.0809, xMultiXlpe: 0.0704, xSinglePvc: 0.0839, xMultiPvc: 0.0732 },
+  400:  { rCu: 0.052429469548133587, rAl: 0.08702306451612901, xSingleXlpe: 0.0802, xMultiXlpe: 0.0702, xSinglePvc: 0.0829, xMultiPvc: 0.0728 },
+  500:  { rCu: 0.04082805500982318, rAl: 0.06767217741935483, xSingleXlpe: 0.0796, xMultiXlpe: null, xSinglePvc: 0.082, xMultiPvc: null },
+  630:  { rCu: 0.024653005893909626, rAl: 0.05760524193548386, xSingleXlpe: 0.0787, xMultiXlpe: null, xSinglePvc: 0.08, xMultiPvc: null },
+};
+
+// Trip curve multiplier used for max earth-fault-loop cable length calc
+const TRIP_CURVE_MULTIPLIER = { B: 5, C: 10, D: 14 };
+
+if (typeof module !== 'undefined') {
+  module.exports = { ENUMS, AIR_TEMP_DERATE, SOIL_TEMP_DERATE, SOIL_RESIST_DERATE, GROUPING_DERATE,
+    PE_SIZE_TABLE, CABLE_DATA, CABLE_ELECTRICAL, TRIP_CURVE_MULTIPLIER, k };
+}

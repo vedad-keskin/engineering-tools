@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lightning Risk Assessment &mdash; Calculation Tool</title>
+<link rel="stylesheet" href="../../assets/css/shared.css">
+<link rel="stylesheet" href="lightning.css">
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">
+    <a href="../../index.html" title="Back to Engineering Tools home">
+      <div class="mark">LR</div>
+      <div>
+        <div class="title">Lightning Risk Assessment</div>
+        <div class="sub">IEC 62305-2 &middot; client-side</div>
+      </div>
+    </a>
+  </div>
+  <div id="toolbar">
+    <button class="tbtn" id="btnImport">Import</button>
+    <input type="file" id="filein" accept="application/json">
+    <button class="tbtn" id="btnExport">Export JSON</button>
+    <button class="tbtn" id="btnLoadExample" title="Load the KTC Tower verification case">Load example</button>
+    <button class="tbtn primary" id="btnPdf">Export PDF Report</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============ PROJECT INFORMATION ============ -->
+  <section class="card" id="projectCard">
+    <h2>Project Information<span class="info-i" data-tip="Shown on the cover page of the exported PDF report. These fields are for identification only and are not used in the calculation.">i</span></h2>
+    <div class="grid cols-2" id="projectFields"></div>
+  </section>
+
+  <!-- ============ STRUCTURE GEOMETRY ============ -->
+  <section class="card" id="geometryCard">
+    <h2>Structure Geometry<span class="info-i" data-tip="AD (Annex A.2) is the collection area for direct flashes - the exposure surface used to estimate strikes to the structure. AM (Annex A.3) is the collection area for flashes near the structure (a 500 m wide band), which magnetically induce surges in internal installation loops.">i</span></h2>
+    <div class="desc">Dimensions of the building and any protruding structures, plus the local lightning strike density.</div>
+    <div class="grid cols-3" id="geometryFields"></div>
+    <div class="metric-strip" id="geometryMetrics" style="margin-top:16px;"></div>
+    <div class="hint" style="margin-top:10px;font-size:11.5px;color:var(--ink-faint);">AD = max(Ad1, Ad2), where Ad1 covers the building footprint plus side exposure (height-dependent) and Ad2 the exposure of a chimney / tower. Set T to 0 when none exists. AM surrounds the structure at a 500 m radius.</div>
+  </section>
+
+  <!-- ============ RISK FACTORS ============ -->
+  <section class="card" id="riskCard">
+    <h2>Risk Factors &amp; Loss Parameters<span class="info-i" data-tip="Coefficients per IEC 62305-2 Annexes B and C. Hover the field tooltips for the guidance text and the numeric values used. Larger values increase the calculated risk.">i</span></h2>
+    <div class="desc">Select the structure circumstances, protection measures and services. The Lightning Protection Level (PB) and the SPD system (PSPD) are the two mitigations you can adjust to bring the risk within the tolerable thresholds.</div>
+    <div class="grid cols-4" id="riskFactorsFields"></div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="card">
+    <h2>Results<span class="info-i" data-tip="Each calculated risk is compared against its tolerable threshold (Table 4): 1 in 100,000 for human life, 1 in 1,000 for loss of service, and 1 in 10,000 for cultural heritage.">i</span></h2>
+    <div class="desc">Assessed risks update live as you change the inputs. A risk above its tolerable threshold is shown as NOT ACCEPTABLE. Each row breaks the risk down into its components (RA, RB, RC, RM).</div>
+    <div id="resultsBody" aria-live="polite"></div>
+    <div id="resultsNotes"></div>
+  </section>
+
+</main>
+
+<footer class="hint-footer">All data stays in your browser &middot; use Export JSON to save your inputs &middot; Import JSON to reload them &middot; Export PDF Report for a print-ready summary.</footer>
+
+<div id="printArea"></div>
+
+<script src="../../assets/js/shared.js"></script>
+<script src="data.js"></script>
+<script src="calc-engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

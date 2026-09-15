@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Diagram Builder &mdash; Engineering Tools</title>
+<link rel="stylesheet" href="../../assets/css/shared.css">
+<link rel="stylesheet" href="network-diagram.css">
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">
+    <a href="../../index.html" title="Back to Engineering Tools home">
+      <div class="mark">ND</div>
+      <div>
+        <div class="title">Network Diagram Builder</div>
+        <div class="sub">Supply hierarchy + single-line block diagram &middot; client-side</div>
+      </div>
+    </a>
+  </div>
+  <div id="tabs">
+    <button class="tabbtn" data-view="project">Project</button>
+    <button class="tabbtn" data-view="settings">Settings</button>
+    <button class="tabbtn" data-view="network">Network</button>
+    <button class="tabbtn" data-view="schedule">Load Schedule</button>
+    <button class="tabbtn" data-view="diagram">Diagram</button>
+  </div>
+  <div id="toolbar">
+    <button class="tbtn" id="btnUndo" title="Undo (Ctrl/Cmd+Z)" disabled>&#8630;</button>
+    <button class="tbtn" id="btnRedo" title="Redo (Ctrl/Cmd+Shift+Z)" disabled>&#8631;</button>
+    <button class="tbtn" id="btnNewProject" title="Start a new project" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">New</button>
+    <button class="tbtn" id="btnImport">Import</button>
+    <input type="file" id="filein" accept="application/json">
+    <button class="tbtn" id="btnExport">Export JSON</button>
+    <button class="tbtn" id="btnExportCP" title="Export a copy readable by the Capacity Planner tool">Export for CP</button>
+    <button class="tbtn primary" id="btnPdf">Export Report</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============ PROJECT / COVER VIEW ============ -->
+  <section class="view" id="view-project">
+    <div class="card">
+      <h2>Project Information<span class="info-i" data-tip="Shown on the cover page of the exported report and on the diagram title block.">i</span></h2>
+      <div class="grid cols-2" id="projectFields"></div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS VIEW ============ -->
+  <section class="view" id="view-settings">
+    <div class="card">
+      <h2>Default parameters for new components<span class="info-i" data-tip="These values prefill new components. Voltage is additionally inherited from the parent supply when known.">i</span></h2>
+      <div id="settingsFields"></div>
+    </div>
+  </section>
+
+  <!-- ============ NETWORK VIEW ============ -->
+  <section class="view" id="view-network">
+    <div class="card table-card">
+      <div class="network-toolbar card-head">
+        <div>
+          <h2>Supply Network<span class="info-i" data-tip="Build the hierarchy from the utility supply down to individual loads. Each node is sized independently — click a row to edit it, use + to add equipment underneath.">i</span></h2>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="tbtn" id="btnLoadExample" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Load example</button>
+          <button class="tbtn" id="btnToggleNetFilters" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Filters</button>
+          <button class="tbtn" id="btnNetColumns" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Columns</button>
+          <button class="tbtn" id="btnSystems" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Systems&hellip;</button>
+          <button class="tbtn" id="btnNetDuplicateSel" style="display:none;background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Duplicate selected</button>
+          <button class="tbtn" id="btnNetDeleteSel" style="display:none;background:var(--fail-bg);color:var(--fail-ink);border-color:var(--fail-border);">Delete selected</button>
+          <button class="tbtn primary" id="btnAddComponent">+ Add component</button>
+        </div>
+      </div>
+
+      <div class="netsortbar" id="netSortBar" style="display:none;">
+        <span id="netSortLabel"></span>
+        <button class="tbtn primary" id="btnMakePerm" style="padding:4px 12px;">Make this order permanent</button>
+        <button class="tbtn" id="btnCancelSort" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);padding:4px 12px;">&times; Revert</button>
+      </div>
+
+      <div class="filterbar" id="netFilterBar" style="display:none;">
+        <div class="field">
+          <label>Search</label>
+          <input id="netFilterSearch" type="text" placeholder="name or tag">
+        </div>
+        <div class="field">
+          <label>System</label>
+          <select id="netFilterSystem"><option value="">All</option></select>
+        </div>
+        <div class="filter-actions">
+          <button class="tbtn" id="netResetFilters" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Reset</button>
+        </div>
+      </div>
+
+      <div class="tablewrap">
+        <table class="sched" id="networkTable">
+          <thead>
+            <tr>
+              <th class="noprint"><input type="checkbox" id="networkSelectAllCb" title="Select all"></th>
+              <th class="col-type">Type</th><th class="col-tag">Tag</th><th class="col-description">Description</th><th class="col-status">Status</th><th class="col-rating">Rating</th><th class="col-voltage">Voltage</th>
+              <th class="col-primary">Primary supply</th><th class="col-redundant">Redundant supply</th><th class="col-feed">Active feed</th><th class="col-connloads">Connected Loads<span class="info-i" data-tip="Direct connections via primary / redundant feed (loads and downstream equipment).">i</span></th><th class="col-connkw">Connected kW<span class="info-i" data-tip="Sum of the rated kW of every load connected to this component via a primary or redundant feed path (each load counted once).">i</span></th>
+              <th class="col-demandkva">Demand kVA<span class="info-i" data-tip="Demand (after demand factors) of only the loads that use this component as their active feed.">i</span></th><th class="col-pf">P.F.</th><th class="col-util">Utilisation</th><th class="noprint"></th>
+            </tr>
+            <tr class="col-filters noprint" id="netColFilters"></tr>
+          </thead>
+          <tbody id="networkBody"></tbody>
+        </table>
+      </div>
+      <div class="network-legend" id="networkLegend"></div>
+      <div id="networkEmpty" class="empty" style="display:none;">
+        <div class="big">No components yet</div>
+        <div>Add a component to start building your network, or load an example project.</div>
+      </div>
+      <div class="hint" style="margin-top:10px;font-size:11.5px;color:var(--ink-faint);">
+        Drag rows within a group to reorder. Click a column header to sort temporarily. Utilisation: <span class="badge ok">OK &le; 80%</span> <span class="badge warn">caution 80&ndash;100%</span> <span class="badge fail">overloaded &gt; 100%</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LOAD SCHEDULE VIEW ============ -->
+  <section class="view" id="view-schedule">
+    <div class="card table-card">
+      <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h2>Load Schedule<span class="info-i" data-tip="Every load in the network. Click a row to edit it; tick the checkboxes to duplicate, delete, or bulk-reassign a selection.">i</span></h2>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="tbtn" id="btnToggleFilters" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Filters</button>
+          <button class="tbtn" id="btnSchedColumns" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Columns</button>
+          <button class="tbtn primary" id="btnAddSchedule">+ Add load</button>
+          <span id="selectionInfo" class="badge" style="display:none;background:var(--accent-soft);color:var(--accent-dark);border:1px solid var(--accent);"></span>
+          <button class="tbtn" id="btnDeleteSel" style="display:none;background:var(--fail-bg);color:var(--fail-ink);border-color:var(--fail-border);">Delete selected</button>
+          <button class="tbtn" id="btnDuplicateSel" style="display:none;background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Duplicate selected</button>
+          <button class="tbtn" id="btnReassignSel" style="display:none;background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Reassign supplies&hellip;</button>
+        </div>
+      </div>
+
+      <div class="filterbar" id="schedFilterBar" style="display:none;">
+        <div class="field">
+          <label>Search</label>
+          <input id="filterSearch" type="text" placeholder="name or tag">
+        </div>
+        <div class="field">
+          <label>Group by</label>
+          <select id="filterGroup">
+            <option value="none">None</option>
+            <option value="system">System</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button class="tbtn" id="btnResetFilters" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Reset</button>
+        </div>
+      </div>
+
+      <div class="tablewrap">
+        <table class="sched" id="schedTable">
+          <thead>
+            <tr>
+              <th class="noprint"><input type="checkbox" id="selectAllCb" title="Select all"></th>
+              <th class="col-num">#</th><th class="col-tag">Tag</th><th class="col-name">Name</th><th class="col-category">Category</th><th class="col-loadtype">Load Type</th><th class="col-v">V</th><th class="col-pf">PF</th><th class="col-kw">kW</th><th class="col-df">DF</th><th class="col-kva">kVA</th><th class="col-flc">FLC (A)</th>
+              <th class="col-primary">Primary supply</th><th class="col-redundant">Redundant supply</th><th class="col-feed">Active feed</th><th></th>
+            </tr>
+            <tr class="col-filters noprint" id="schedColFilters"></tr>
+          </thead>
+          <tbody id="schedBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="empty" style="display:none;">
+        <div class="big">No loads yet</div>
+        <div>Add loads with the + Add load button above, or in the Network tab.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DIAGRAM VIEW ============ -->
+  <section class="view" id="view-diagram">
+    <div class="dg-shell">
+      <div class="dg-toolbar">
+        <button class="tbtn" id="btnDgFit" title="Fit to window">Fit</button>
+        <button class="tbtn" id="btnDgZoomOut" title="Zoom out">&minus;</button>
+        <span id="dgZoomLabel" class="dg-zoom-label">100%</span>
+        <button class="tbtn" id="btnDgZoomIn" title="Zoom in">+</button>
+        <span class="dg-sep"></span>
+        <button class="tbtn" id="btnDgRelayout" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Re-layout all</button>
+        <label class="dg-check"><input type="checkbox" id="chkDgGrid" checked> Grid</label>
+        <label class="dg-check"><input type="checkbox" id="chkDgTitleBlock" checked> Title block</label>
+        <span class="dg-sep"></span>
+        <label class="dg-check">Sheet
+          <select id="selDgSheet">
+            <option value="A4-landscape">A4 landscape</option>
+            <option value="A3-landscape" selected>A3 landscape</option>
+            <option value="A0-landscape">A0 landscape</option>
+          </select>
+        </label>
+        <span class="dg-sep"></span>
+        <button class="tbtn" id="btnDgExportSvg" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Export SVG</button>
+        <button class="tbtn" id="btnDgExportPng" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Export PNG</button>
+        <span class="dg-hint">Drag a symbol's terminal onto another symbol to connect them. Click a symbol to edit it.</span>
+      </div>
+      <div class="dg-body">
+        <div class="dg-canvas-wrap" id="dgCanvasWrap">
+          <svg id="dgCanvas" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div id="dgEmpty" class="empty" style="display:none;">
+            <div class="big">Nothing to show yet</div>
+            <div>Add components in the Network tab, or load the example project, then come back here.</div>
+          </div>
+        </div>
+        <aside class="dg-panel" id="dgPanel" style="display:none;"></aside>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="hint-footer">All data stays in your browser (autosaved) &middot; use Export JSON to save a copy of your project &middot; Import JSON to reload it later.</footer>
+
+<!-- ============ NODE / LOAD EDITOR MODAL ============ -->
+<div id="overlay">
+  <div id="modal">
+    <div class="modalhead">
+      <h3 id="modalTitle">Edit node</h3>
+      <div class="modal-nav" id="modalNav">
+        <button class="iconbtn" id="modalPrev" title="Previous item">&lsaquo;</button>
+        <span class="modal-nav-pos" id="modalNavPos"></span>
+        <button class="iconbtn" id="modalNext" title="Next item">&rsaquo;</button>
+      </div>
+      <button class="closex" id="modalClose">&times;</button>
+    </div>
+    <div class="modaltabs" id="modalTabs" style="display:none;"></div>
+    <div class="modalbody" id="modalBody"></div>
+    <div class="modalfoot">
+      <button class="tbtn" id="btnDeleteNode" style="background:var(--fail-bg);color:var(--fail-ink);border-color:var(--fail-border);">Delete</button>
+      <div style="display:flex;gap:8px;">
+        <button class="tbtn" id="btnDoneAddAnother" style="display:none;background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Done + add another</button>
+        <button class="tbtn primary" id="btnCloseModal">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BULK REASSIGN MODAL ============ -->
+<div id="reassignOverlay" class="mini-overlay">
+  <div class="mini-modal">
+    <div class="modalhead">
+      <h3>Reassign supplies</h3>
+      <button class="closex" id="reassignClose">&times;</button>
+    </div>
+    <div class="modalbody">
+      <div class="desc" id="reassignCount"></div>
+      <div class="grid cols-1" id="reassignFields"></div>
+    </div>
+    <div class="modalfoot" style="justify-content:flex-end;gap:8px;">
+      <button class="tbtn" id="reassignCancel" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Cancel</button>
+      <button class="tbtn primary" id="reassignApply">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SYSTEMS MANAGEMENT MODAL ============ -->
+<div id="systemsOverlay" class="mini-overlay">
+  <div class="mini-modal">
+    <div class="modalhead">
+      <h3>Systems</h3>
+      <button class="closex" id="systemsClose">&times;</button>
+    </div>
+    <div class="modalbody">
+      <div class="desc">Systems group components in the Network tab and diagram, and give them their colour. Assign a component to a system via its editor.</div>
+      <div style="text-align:right;margin:6px 0;"><button class="tbtn" id="btnAddSystem" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">+ Add system</button></div>
+      <div class="systems-list" id="systemsList"></div>
+    </div>
+    <div class="modalfoot" style="justify-content:flex-end;gap:8px;">
+      <button class="tbtn primary" id="systemsCancel">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PDF EXPORT OPTIONS ============ -->
+<div id="pdfOptionsOverlay" class="mini-overlay">
+  <div class="mini-modal">
+    <div class="modalhead">
+      <h3>Export Report</h3>
+      <button class="closex" id="pdfOptionsClose">&times;</button>
+    </div>
+    <div class="modalbody">
+      <div class="desc">Choose which sections to include in the exported report.</div>
+      <label class="opt-row"><input type="checkbox" id="optCover" checked> <div><div class="opt-title">Cover Page</div><div class="opt-sub">Project overview &amp; sign-off details</div></div></label>
+      <label class="opt-row"><input type="checkbox" id="optEquip" checked> <div><div class="opt-title">Equipment Schedule</div><div class="opt-sub">Rated distribution equipment &amp; utilisation</div></div></label>
+      <label class="opt-row"><input type="checkbox" id="optLoads" checked> <div><div class="opt-title">Load Schedule</div><div class="opt-sub">Full schedule of all loads</div></div></label>
+      <label class="opt-row"><input type="checkbox" id="optDiagram" checked> <div><div class="opt-title">Network Diagram</div><div class="opt-sub">Single-line block diagram on its own sheet size, with title block</div></div></label>
+    </div>
+    <div class="modalfoot" style="justify-content:flex-end;gap:8px;">
+      <button class="tbtn" id="pdfOptionsCancel" style="background:var(--surface-2);color:var(--ink);border-color:var(--border-strong);">Cancel</button>
+      <button class="tbtn primary" id="pdfOptionsGenerate">Generate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm dialog & toast container are injected lazily by shared.js. -->
+<div id="printArea"></div>
+
+<script src="../../assets/js/shared.js"></script>
+<script src="data.js"></script>
+<script src="calc-engine.js"></script>
+<script src="geometry.js"></script>
+<script src="history.js"></script>
+<script src="diagram.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
