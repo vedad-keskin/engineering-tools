@@ -100,12 +100,16 @@
   width: 40px;
   height: 40px;
   flex: none;
-  filter: drop-shadow(0 4px 10px rgba(15, 95, 201, 0.45));
-  transition: transform var(--dur-2) var(--ease);
+  /* Invert while keeping hue: navy becomes ice-blue so it reads on the dark rail. */
+  filter: invert(1) hue-rotate(180deg) brightness(1.35) contrast(1.05)
+    drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+  transition: transform var(--dur-2) var(--ease), filter var(--dur-2) var(--ease);
 }
 
 .brand:hover .logo {
   transform: rotate(-8deg) scale(1.04);
+  filter: invert(1) hue-rotate(180deg) brightness(1.5) contrast(1.08)
+    drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
 }
 
 .brand-text {
