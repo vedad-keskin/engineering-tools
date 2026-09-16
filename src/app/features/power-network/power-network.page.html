@@ -1,0 +1,236 @@
+<div class="page-head">
+  <div>
+    <span class="eyebrow"><app-icon name="network" [size]="13" /> Capacity + SLD</span>
+    <h1>{{ 'power.title' | transloco }}</h1>
+    <p>{{ 'power.subtitle' | transloco }}</p>
+  </div>
+  <div class="toolbar-row">
+    <app-button variant="ghost" icon="undo" [disabled]="!store.canUndo()" [title]="'common.undo' | transloco" (clicked)="store.undo()" />
+    <app-button variant="ghost" icon="redo" [disabled]="!store.canRedo()" [title]="'common.redo' | transloco" (clicked)="store.redo()" />
+    <span class="sep"></span>
+    <app-button [label]="'common.new' | transloco" icon="file" (clicked)="store.newProject()" />
+    <app-button [label]="'power.example' | transloco" icon="layers" (clicked)="store.loadDemo()" />
+    <app-button [label]="'common.import' | transloco" icon="upload" (clicked)="importJson()" />
+    <app-button [label]="'common.exportJson' | transloco" icon="download" (clicked)="exportJson()" />
+    <app-button [label]="'common.exportCsv' | transloco" icon="table" (clicked)="exportCsv()" />
+    <app-button variant="primary" [label]="'common.exportPdf' | transloco" icon="file-text" (clicked)="exportPdf()" />
+  </div>
+</div>
+
+<app-tabs [(value)]="tab">
+  <app-tab value="project" [label]="'power.tabProject' | transloco">
+    <div class="panel">
+      <app-project-info-form [model]="store.state().project" (changed)="store.patch({ project: { ...store.state().project, ...$event } })" />
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>{{ 'power.systems' | transloco }}</h2>
+        <app-button size="sm" [label]="'power.addSystem' | transloco" icon="plus" (clicked)="store.addSystem('System ' + (store.state().systems.length + 1))" />
+      </div>
+      <ul class="chips">
+        @for (sys of store.state().systems; track sys.id) {
+          <li class="chip"><span class="swatch" [style.background]="sys.color"></span> {{ sys.name }}</li>
+        }
+      </ul>
+    </div>
+  </app-tab>
+
+  <app-tab value="network" [label]="'power.tabNetwork' | transloco" [badge]="store.state().nodes.length">
+    <div class="sched-head">
+      <div class="toolbar-row">
+        <div class="field inline">
+          <select [value]="addType()" (change)="addType.set($any($event.target).value)">
+            @for (t of types; track t) { <option [value]="t">{{ typeMeta[t].label }}</option> }
+          </select>
+        </div>
+        <app-button variant="primary" [label]="'power.addNode' | transloco" icon="plus" (clicked)="add()" />
+      </div>
+    </div>
+    @if (!store.state().nodes.length) {
+      <div class="panel"><app-empty-state [title]="'power.emptyTitle' | transloco" [body]="'power.emptyBody' | transloco" /></div>
+    } @else {
+      <div class="tablewrap">
+        <table class="sched">
+          <thead>
+            <tr>
+              <th>{{ 'power.tag' | transloco }}</th>
+              <th>{{ 'power.name' | transloco }}</th>
+              <th>{{ 'power.type' | transloco }}</th>
+              <th>{{ 'power.parent' | transloco }}</th>
+              <th class="num">kVA</th>
+              <th class="num">{{ 'power.util' | transloco }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (node of store.state().nodes; track node.id) {
+              @let roll = store.rollupOf(node);
+              <tr class="clickable" (click)="editing.set(node)">
+                <td class="strong mono">{{ node.tag }}</td>
+                <td>{{ node.name }}</td>
+                <td><span class="badge muted">{{ typeMeta[node.type].short }}</span></td>
+                <td class="mono muted">{{ parentTag(node) }}</td>
+                <td class="num">{{ roll.activeKVA | num:1 }}</td>
+                <td class="num">
+                  @if (roll.utilizationPct !== null) {
+                    <span class="util">
+                      <span class="util-bar"><span [class]="'fill ' + utilTone(node)" [style.width.%]="roll.utilizationPct > 100 ? 100 : roll.utilizationPct"></span></span>
+                      {{ roll.utilizationPct | num:0 }}%
+                    </span>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+                <td class="num">
+                  <span class="rowactions" (click)="$event.stopPropagation()">
+                    <app-button variant="ghost" size="sm" icon="trash" [title]="'common.delete' | transloco" (clicked)="deleteNode(node)" />
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </app-tab>
+
+  <app-tab value="schedule" [label]="'power.tabSchedule' | transloco" [badge]="store.loads().length">
+    @if (!store.loads().length) {
+      <div class="panel"><app-empty-state [title]="'power.emptyTitle' | transloco" [body]="'power.emptyBody' | transloco" /></div>
+    } @else {
+      <div class="tablewrap">
+        <table class="sched">
+          <thead>
+            <tr>
+              <th>{{ 'power.tag' | transloco }}</th>
+              <th>{{ 'power.name' | transloco }}</th>
+              <th class="num">kW</th>
+              <th class="num">PF</th>
+              <th>{{ 'power.category' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (node of store.loads(); track node.id) {
+              <tr class="clickable" (click)="editing.set(node)">
+                <td class="strong mono">{{ node.tag }}</td>
+                <td>{{ node.name }}</td>
+                <td class="num">{{ node.ratedKW | num:1 }}</td>
+                <td class="num">{{ node.pf | num:2 }}</td>
+                <td><app-status-badge [label]="store.categoryOf(node)" tone="muted" /></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </app-tab>
+
+  <app-tab value="scenarios" [label]="'power.tabScenarios' | transloco" [badge]="store.state().scenarios.length">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>{{ 'power.tabScenarios' | transloco }}</h2>
+        <app-button size="sm" [label]="'power.addScenario' | transloco" icon="plus" (clicked)="store.addScenario('Scenario ' + (store.state().scenarios.length + 1))" />
+      </div>
+      <div class="scenario-list">
+        <button type="button" class="scenario" [class.on]="store.state().activeScenarioId === null" (click)="store.setActiveScenario(null)">
+          <span class="dot"></span>
+          <span class="name">{{ 'power.baseCase' | transloco }}</span>
+        </button>
+        @for (sc of store.state().scenarios; track sc.id) {
+          <button type="button" class="scenario" [class.on]="store.state().activeScenarioId === sc.id" (click)="store.setActiveScenario(sc.id)">
+            <span class="dot"></span>
+            <span class="name">{{ sc.name }}</span>
+          </button>
+        }
+      </div>
+    </div>
+  </app-tab>
+
+  <app-tab value="summary" [label]="'power.tabSummary' | transloco">
+    <div class="metric-strip big">
+      <div class="metric-chip"><div class="lbl">{{ 'power.demandKw' | transloco }}</div><div class="val">{{ store.totals().demandKW | num:1 }}</div></div>
+      <div class="metric-chip"><div class="lbl">{{ 'power.demandKva' | transloco }}</div><div class="val">{{ store.totals().demandKVA | num:1 }}</div></div>
+      <div class="metric-chip"><div class="lbl">{{ 'power.utility' | transloco }}</div><div class="val">{{ store.totals().utilityPct | num:0 }}%</div></div>
+    </div>
+    <div class="summary-grid">
+      <div class="panel">
+        <h2>{{ 'power.category' | transloco }}</h2>
+        <div class="cat-row">
+          <span class="cat-lbl">{{ 'power.critical' | transloco }}</span>
+          <span class="cat-val">{{ store.totals().cat.critical.kW | num:1 }} kW</span>
+        </div>
+        <app-progress [value]="catPct().critical" color="#0f5fc9" />
+        <div class="cat-row">
+          <span class="cat-lbl">{{ 'power.essential' | transloco }}</span>
+          <span class="cat-val">{{ store.totals().cat.essential.kW | num:1 }} kW</span>
+        </div>
+        <app-progress [value]="catPct().essential" color="#0f9d8a" />
+        <div class="cat-row">
+          <span class="cat-lbl">{{ 'power.nonEssential' | transloco }}</span>
+          <span class="cat-val">{{ store.totals().cat['non-essential'].kW | num:1 }} kW</span>
+        </div>
+        <app-progress [value]="catPct().nonEssential" color="#8b95a3" />
+      </div>
+      <div class="panel chart-panel">
+        <app-category-chart
+          [critical]="store.totals().cat.critical.kW"
+          [essential]="store.totals().cat.essential.kW"
+          [nonEssential]="store.totals().cat['non-essential'].kW"
+        />
+      </div>
+    </div>
+  </app-tab>
+
+  <app-tab value="diagram" [label]="'power.tabDiagram' | transloco">
+    <app-network-diagram [state]="store.state()" (nodeChange)="store.updateNode($event)" (relayout)="store.relayout(true)" />
+  </app-tab>
+</app-tabs>
+
+<app-dialog [open]="editorOpen()" (openChange)="closeEditor($event)" [header]="'power.editNode' | transloco" [sub]="editing() ? typeLabel(editing()!.type) : ''" width="min(680px, 96vw)">
+  @if (editing(); as node) {
+    <div class="field-grid cols-2">
+      <div class="field"><label>{{ 'power.name' | transloco }}</label><input [value]="node.name" (input)="patchNode('name', $any($event.target).value)" /></div>
+      <div class="field"><label>{{ 'power.tag' | transloco }}</label><input [value]="node.tag" (input)="patchNode('tag', $any($event.target).value)" /></div>
+      <div class="field">
+        <label>{{ 'power.parent' | transloco }}</label>
+        <select [value]="node.parentId ?? ''" (change)="patchNode('parentId', $any($event.target).value === '' ? null : +$any($event.target).value)">
+          <option value="">—</option>
+          @for (opt of parentOptions(); track opt.value) {
+            @if (opt.value !== node.id && opt.value !== null) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label>{{ 'power.redundant' | transloco }}</label>
+        <select [value]="node.redundantParentId ?? ''" (change)="patchNode('redundantParentId', $any($event.target).value === '' ? null : +$any($event.target).value)">
+          <option value="">—</option>
+          @for (opt of parentOptions(); track opt.value) {
+            @if (opt.value !== node.id && opt.value !== null) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          }
+        </select>
+      </div>
+    </div>
+    @if (typeFields[node.type].length) {
+      <div class="section-title">{{ typeLabel(node.type) }}</div>
+      <div class="field-grid cols-3">
+        @for (field of typeFields[node.type]; track field.key) {
+          @if (field.type === 'select') {
+            <app-select-field [label]="field.label" [value]="$any(node)[field.key]" [options]="field.options || []" (valueChange)="patchNode(field.key, $event)" />
+          } @else {
+            <app-number-field [label]="field.label" [unit]="field.unit || ''" [value]="$any(node)[field.key]" (valueChange)="patchNode(field.key, $event)" />
+          }
+        }
+      </div>
+    }
+  }
+  @if (editing(); as node) {
+    <div footer class="dlg-foot">
+      <app-button variant="danger" [label]="'common.delete' | transloco" icon="trash" (clicked)="deleteNode(node)" />
+      <app-button variant="primary" [label]="'common.done' | transloco" icon="check" (clicked)="saveEditor()" />
+    </div>
+  }
+</app-dialog>

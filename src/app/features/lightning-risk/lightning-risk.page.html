@@ -1,0 +1,92 @@
+<div class="page-head">
+  <div>
+    <span class="eyebrow"><app-icon name="lightning" [size]="13" /> {{ edition.label }}</span>
+    <h1>{{ 'lightning.title' | transloco }}</h1>
+    <p>{{ 'lightning.subtitle' | transloco }}</p>
+  </div>
+  <div class="toolbar-row">
+    <app-button variant="ghost" icon="undo" [disabled]="!store.canUndo()" [title]="'common.undo' | transloco" (clicked)="store.undo()" />
+    <app-button variant="ghost" icon="redo" [disabled]="!store.canRedo()" [title]="'common.redo' | transloco" (clicked)="store.redo()" />
+    <span class="sep"></span>
+    <app-button [label]="'common.new' | transloco" icon="file" (clicked)="store.newProject()" />
+    <app-button [label]="'lightning.example' | transloco" icon="layers" (clicked)="store.loadExample()" />
+    <app-button [label]="'common.import' | transloco" icon="upload" (clicked)="importJson()" />
+    <app-button [label]="'common.exportJson' | transloco" icon="download" (clicked)="exportJson()" />
+    <app-button variant="primary" [label]="'common.exportPdf' | transloco" icon="file-text" (clicked)="exportPdf()" />
+  </div>
+</div>
+
+<div class="panel stepper-panel">
+  <app-stepper [(value)]="step" [prevLabel]="'common.back' | transloco" [nextLabel]="'common.next' | transloco">
+    <app-step [value]="1" [label]="'lightning.stepProject' | transloco">
+      <app-project-info-form [model]="store.state().project" (changed)="store.patch({ project: { name: $event.name || $event.projectName || store.state().project.name, id: $event.id || $event.projectNo || store.state().project.id } })" />
+    </app-step>
+
+    <app-step [value]="2" [label]="'lightning.stepGeometry' | transloco">
+      <div class="field-grid cols-3">
+        <app-number-field label="Ng" unit="/km²·yr" [value]="+store.state().Ng || ''" (valueChange)="store.patch({ Ng: $event })" />
+        <app-number-field label="L" unit="m" [value]="+store.state().L || ''" (valueChange)="store.patch({ L: $event })" />
+        <app-number-field label="W" unit="m" [value]="+store.state().W || ''" (valueChange)="store.patch({ W: $event })" />
+        <app-number-field label="H" unit="m" [value]="+store.state().Hi || ''" (valueChange)="store.patch({ Hi: $event })" />
+        <app-number-field label="T" unit="m" [value]="+store.state().T || ''" (valueChange)="store.patch({ T: $event })" />
+      </div>
+    </app-step>
+
+    <app-step [value]="3" [label]="'lightning.stepFactors' | transloco">
+      <div class="field-grid cols-2">
+        <app-select-field [label]="'lightning.hz' | transloco" [value]="store.state().hz" [options]="labels(tables.specialHazard)" (valueChange)="store.patch({ hz: $any($event) })" />
+        <app-select-field [label]="'lightning.structure' | transloco" [value]="store.state().structureType" [options]="labels(tables.structureType)" (valueChange)="store.patch({ structureType: $any($event) })" />
+        <app-select-field [label]="'lightning.floor' | transloco" [value]="store.state().floorType" [options]="labels(tables.floorType)" (valueChange)="store.patch({ floorType: $any($event) })" />
+        <app-select-field [label]="'lightning.fire' | transloco" [value]="store.state().fireProvisions" [options]="labels(tables.fireProvisions)" (valueChange)="store.patch({ fireProvisions: $any($event) })" />
+        <app-select-field [label]="'lightning.lps' | transloco" [value]="store.state().Pd" [options]="labels(tables.protectionLevel)" (valueChange)="store.patch({ Pd: $any($event) })" />
+        <app-select-field [label]="'lightning.spd' | transloco" [value]="store.state().spd" [options]="labels(tables.spd)" (valueChange)="store.patch({ spd: $any($event) })" />
+        <app-select-field [label]="'lightning.location' | transloco" [value]="store.state().Cd" [options]="labels(tables.location)" (valueChange)="store.patch({ Cd: $any($event) })" />
+        <app-select-field [label]="'lightning.fireRisk' | transloco" [value]="store.state().rf" [options]="labels(tables.fireRisk)" (valueChange)="store.patch({ rf: $any($event) })" />
+        <app-select-field [label]="'lightning.line' | transloco" [value]="store.state().Ai" [options]="['No','Aerial','Underground']" (valueChange)="store.patch({ Ai: $any($event) })" />
+        <app-select-field [label]="'lightning.services' | transloco" [value]="store.state().services" [options]="labels(tables.serviceType)" (valueChange)="store.patch({ services: $any($event) })" />
+        <app-select-field [label]="'lightning.lifeCritical' | transloco" [value]="store.state().lifeCritical ? 'Yes' : 'No'" [options]="['Yes','No']" (valueChange)="store.patch({ lifeCritical: $event === 'Yes' })" />
+      </div>
+    </app-step>
+
+    <app-step [value]="4" [label]="'lightning.stepResults' | transloco">
+      @if (store.result(); as r) {
+        @if (r.incomplete) {
+          <div class="empty">
+            <app-icon name="alert" [size]="28" class="muted" />
+            <p>{{ 'lightning.incomplete' | transloco }}</p>
+          </div>
+        } @else {
+          <div class="results">
+            <div class="result" [class]="'result ' + tone(r.result1)">
+              <div class="r-head"><span class="r-id">R1</span> {{ 'lightning.life' | transloco }}</div>
+              <div class="r-val">{{ exp(r.R1) }}</div>
+              <div class="results-bar"><span [style.width.%]="barPct(r.R1, rt.RT1)"></span></div>
+              <div class="r-foot"><app-status-badge [label]="r.result1" [tone]="tone(r.result1)" /><span class="hint">RT1 = {{ rt.RT1 }}</span></div>
+            </div>
+            <div class="result" [class]="'result ' + tone(r.result2)">
+              <div class="r-head"><span class="r-id">R2</span> {{ 'lightning.service' | transloco }}</div>
+              <div class="r-val">{{ exp(r.R2) }}</div>
+              <div class="results-bar"><span [style.width.%]="barPct(r.R2, rt.RT2)"></span></div>
+              <div class="r-foot"><app-status-badge [label]="r.result2" [tone]="tone(r.result2)" /><span class="hint">RT2 = {{ rt.RT2 }}</span></div>
+            </div>
+            <div class="result" [class]="'result ' + tone(r.result3)">
+              <div class="r-head"><span class="r-id">R3</span> {{ 'lightning.heritage' | transloco }}</div>
+              <div class="r-val">{{ exp(r.R3) }}</div>
+              <div class="results-bar"><span [style.width.%]="barPct(r.R3, rt.RT3)"></span></div>
+              <div class="r-foot"><app-status-badge [label]="r.result3" [tone]="tone(r.result3)" /><span class="hint">RT3 = {{ rt.RT3 }}</span></div>
+            </div>
+          </div>
+          <app-metric-strip [chips]="[
+            { label: 'ND', value: r.ND.toExponential(3) },
+            { label: 'NM', value: r.NM.toExponential(3) },
+            { label: 'PA', value: txt(r.PA) },
+            { label: 'PB', value: txt(r.PB) },
+            { label: 'PC', value: txt(r.PC) },
+            { label: 'PM', value: txt(r.PM) }
+          ]" />
+          <p class="hint disclaimer">{{ 'lightning.disclaimer' | transloco }}</p>
+        }
+      }
+    </app-step>
+  </app-stepper>
+</div>

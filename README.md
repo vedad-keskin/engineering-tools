@@ -1,59 +1,71 @@
-# EngineeringTools
+# Engineering Tools
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.8.
+Client-side Angular 22 toolkit for LV electrical design:
 
-## Development server
+- **LV Cable Sizing** — IEC 60364 ampacity, derating, voltage drop, earth-fault loop
+- **Power Network** — supply hierarchy, scenarios, utilisation, single-line diagram
+- **Lightning Risk** — IEC 62305-2:2010 component risk (R1 / R2 / R3)
+- Earthing cable and building PUE stay as coming-soon placeholders
 
-To start a local development server, run:
+Everything runs in the browser. Projects autosave to IndexedDB. Nothing is uploaded.
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Develop
 
 ```bash
-ng generate component component-name
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Open http://localhost:4200/
+
+## Test
 
 ```bash
-ng generate --help
+npm test
 ```
 
-## Building
+Engine golden tests live next to each calculator under `src/app/features/*/engine/*.spec.ts`.
 
-To build the project run:
+## Build
 
 ```bash
-ng build
+npm run build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Production build includes a service worker (`ngsw-config.json`) so the app can run offline. Output lands in `dist/engineering-tools/browser`.
 
-## Running unit tests
+## Deploy (Vercel)
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Configured via [`vercel.json`](vercel.json): production build, SPA fallback to `index.html`, and cache headers for the service worker.
+
+1. Push the repo to GitHub (or GitLab / Bitbucket).
+2. Import the project in [Vercel](https://vercel.com/new) — `vercel.json` sets build and output; leave Framework Preset as Other / None.
+3. Deploy. Deep links like `/lv-cable-sizing` work via the rewrite.
+
+Or from the CLI:
 
 ```bash
-ng test
+npx vercel
 ```
 
-## Running end-to-end tests
+No environment variables are required; the app is fully client-side.
 
-For end-to-end (e2e) testing, run:
+## UI
 
-```bash
-ng e2e
-```
+Custom design system in `src/app/ui` (no component library): button, tabs, stepper, dialog (native `<dialog>`), toast, confirm, checkbox, progress, inline SVG icons and flags. Palette is derived from the logo (navy `#0b1c33`, blue `#0f5fc9`); tokens live in `src/styles.css`.
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+- Sidebar rail on the left (hover to expand, pin to keep open); becomes a bottom tab bar under 820px.
+- Keyboard: `1`–`6` jump to tools, `?` shows shortcuts, `Ctrl+S` save, `Ctrl+Z` / `Ctrl+Shift+Z` undo / redo.
+- Theme: day / night toggle in the rail. First start follows the OS preference until you choose.
+- Motion is limited to `transform` / `opacity` and respects `prefers-reduced-motion`.
 
-## Additional Resources
+## Languages
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+English, Dutch, German, French, Spanish, Italian. Switch from the flag button in the rail.
+
+## Importing old projects
+
+JSON from the original HTML tools still imports:
+
+- LV cable sizing state
+- Capacity Planner / Block Diagram / Network Diagram (merged into Power Network)
+- Lightning risk assessment

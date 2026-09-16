@@ -1,0 +1,205 @@
+<div class="page-head">
+  <div>
+    <span class="eyebrow"><app-icon name="zap" [size]="13" /> IEC 60364</span>
+    <h1>{{ 'lv.title' | transloco }}</h1>
+    <p>{{ 'lv.subtitle' | transloco }}</p>
+  </div>
+  <div class="toolbar-row">
+    <app-button variant="ghost" icon="undo" [disabled]="!store.canUndo()" [title]="'common.undo' | transloco" (clicked)="store.undo()" />
+    <app-button variant="ghost" icon="redo" [disabled]="!store.canRedo()" [title]="'common.redo' | transloco" (clicked)="store.redo()" />
+    <span class="sep"></span>
+    <app-button [label]="'common.new' | transloco" icon="file" (clicked)="store.newProject()" />
+    <app-button [label]="'common.import' | transloco" icon="upload" (clicked)="importJson()" />
+    <app-button [label]="'common.exportJson' | transloco" icon="download" (clicked)="exportJson()" />
+    <app-button [label]="'common.exportCsv' | transloco" icon="table" (clicked)="exportCsv()" />
+    <app-button variant="primary" [label]="'common.exportPdf' | transloco" icon="file-text" (clicked)="pdfOpen.set(true)" />
+  </div>
+</div>
+
+<app-tabs [(value)]="tab">
+  <app-tab value="project" [label]="'lv.tabProject' | transloco">
+    <div class="panel">
+      <app-project-info-form [model]="store.state().project" (changed)="store.updateProject({ ...store.state().project, ...$event })" />
+    </div>
+  </app-tab>
+
+  <app-tab value="general" [label]="'lv.tabConditions' | transloco">
+    <div class="panel">
+      <h2>{{ 'lv.site' | transloco }}</h2>
+      <div class="field-grid cols-4">
+        <app-number-field [label]="'lv.indoorTemp' | transloco" unit="°C" [value]="store.state().general.site.maxIndoorTemp" (valueChange)="patchGeneral('site.maxIndoorTemp', $event || 0)" />
+        <app-number-field [label]="'lv.outdoorTemp' | transloco" unit="°C" [value]="store.state().general.site.maxOutdoorTemp" (valueChange)="patchGeneral('site.maxOutdoorTemp', $event || 0)" />
+        <app-number-field [label]="'lv.groundTemp' | transloco" unit="°C" [value]="store.state().general.site.maxGroundTemp" (valueChange)="patchGeneral('site.maxGroundTemp', $event || 0)" />
+        <app-number-field [label]="'lv.soilResist' | transloco" unit="K·m/W" [value]="store.state().general.site.soilResistivity" (valueChange)="patchGeneral('site.soilResistivity', $event || 0)" />
+        <app-select-field [label]="'lv.insulation' | transloco" [value]="store.state().general.site.insulationType" [options]="enums.insulation" (valueChange)="patchGeneral('site.insulationType', $event)" />
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>{{ 'lv.bunched' | transloco }}</h2>
+      <div class="field-grid cols-2">
+        <app-select-field [label]="'lv.indoorInstall' | transloco" [value]="store.state().general.bunched.indoor.installation" [options]="enums.airInstallationBunched" (valueChange)="patchGeneral('bunched.indoor.installation', $event)" />
+        <app-select-field [label]="'lv.outdoorInstall' | transloco" [value]="store.state().general.bunched.outdoor.installation" [options]="enums.airInstallationBunched" (valueChange)="patchGeneral('bunched.outdoor.installation', $event)" />
+      </div>
+      <app-metric-strip [chips]="[
+        chip('Indoor k', store.derating().bunched.indoor.total),
+        chip('Outdoor k', store.derating().bunched.outdoor.total)
+      ]" />
+    </div>
+
+    <div class="panel">
+      <h2>{{ 'lv.nonBunched' | transloco }}</h2>
+      <div class="field-grid cols-2">
+        <app-select-field [label]="'lv.indoorInstall' | transloco" [value]="store.state().general.nonBunched.indoor.installation" [options]="enums.airInstallationNonBunched" (valueChange)="patchGeneral('nonBunched.indoor.installation', $event)" />
+        <app-select-field [label]="'lv.outdoorInstall' | transloco" [value]="store.state().general.nonBunched.outdoor.installation" [options]="enums.airInstallationNonBunched" (valueChange)="patchGeneral('nonBunched.outdoor.installation', $event)" />
+      </div>
+      <app-metric-strip [chips]="[
+        chip('Indoor k', store.derating().nonBunched.indoor.total),
+        chip('Outdoor k', store.derating().nonBunched.outdoor.total)
+      ]" />
+    </div>
+
+    <div class="panel">
+      <h2>{{ 'lv.underground' | transloco }}</h2>
+      <div class="field-grid cols-3">
+        <app-select-field [label]="'lv.ugInstall' | transloco" [value]="store.state().general.underground.installation" [options]="enums.groundInstallation" (valueChange)="patchGeneral('underground.installation', $event)" />
+        <app-number-field [label]="'lv.maxCables' | transloco" [value]="store.state().general.underground.maxCables" (valueChange)="patchGeneral('underground.maxCables', $event || 0)" />
+      </div>
+      <app-metric-strip [chips]="[
+        chip('kθ', store.derating().underground.soilTemp),
+        chip('kρ', store.derating().underground.soilResist),
+        chip('kg', store.derating().underground.grouping),
+        chip('k tot', store.derating().underground.total)
+      ]" />
+    </div>
+  </app-tab>
+
+  <app-tab value="schedule" [label]="'lv.tabSchedule' | transloco" [badge]="store.state().rows.length">
+    <div class="sched-head">
+      <div class="sched-summary">
+        @if (summary().total) {
+          <span class="badge ok">{{ summary().ok }} OK</span>
+          @if (summary().fail) {
+            <span class="badge fail">{{ summary().fail }} FAIL</span>
+          }
+          @if (summary().other) {
+            <span class="badge warn">{{ summary().other }}</span>
+          }
+        }
+      </div>
+      <div class="toolbar-row">
+        <app-button [label]="'lv.example' | transloco" icon="layers" (clicked)="store.addRow(true)" />
+        <app-button variant="primary" [label]="'lv.addCable' | transloco" icon="plus" (clicked)="openEditor(store.addRow())" />
+      </div>
+    </div>
+
+    @if (!store.state().rows.length) {
+      <div class="panel">
+        <app-empty-state [title]="'lv.emptyTitle' | transloco" [body]="'lv.emptyBody' | transloco" />
+      </div>
+    } @else {
+      <div class="tablewrap">
+        <table class="sched">
+          <thead>
+            <tr>
+              <th class="num">#</th>
+              <th>{{ 'lv.tag' | transloco }}</th>
+              <th>{{ 'lv.load' | transloco }}</th>
+              <th class="num">kW</th>
+              <th>{{ 'lv.size' | transloco }}</th>
+              <th class="num">FLC</th>
+              <th class="num">Iz′</th>
+              <th class="num">VD %</th>
+              <th>{{ 'common.status' | transloco }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of store.state().rows; track row.id) {
+              @let res = store.rowResults().get(row.id);
+              <tr class="clickable" (click)="openEditor(row)">
+                <td class="num muted">{{ row.no }}</td>
+                <td class="strong">{{ row.panel }}</td>
+                <td>{{ row.loadName }}</td>
+                <td class="num">{{ row.ratedLoadKW | num:1 }}</td>
+                <td class="mono">{{ row.noCores }}×{{ row.cableSize }}</td>
+                <td class="num">{{ res?.flc | num:1 }}</td>
+                <td class="num">{{ res?.deratedAmpacity | num:1 }}</td>
+                <td class="num">{{ res?.cableVDPct | num:2 }}</td>
+                <td><app-status-badge [label]="res?.remarks || '–'" [tone]="statusTone(res?.remarks)" /></td>
+                <td class="num">
+                  <span class="rowactions" (click)="$event.stopPropagation()">
+                    <app-button variant="ghost" size="sm" icon="copy" [title]="'lv.duplicate' | transloco" (clicked)="store.duplicateRow(row.id)" />
+                    <app-button variant="ghost" size="sm" icon="trash" [title]="'common.delete' | transloco" (clicked)="confirmDelete(row.id)" />
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </app-tab>
+</app-tabs>
+
+<app-dialog [open]="editorOpen()" (openChange)="closeEditor($event)" [header]="'lv.editCable' | transloco" [sub]="editing()?.panel + ' · ' + editing()?.loadName" width="min(940px, 96vw)">
+  @if (editing(); as row) {
+    <div class="section-title">{{ 'lv.load' | transloco }}</div>
+    <div class="field-grid cols-3">
+      <div class="field"><label>{{ 'lv.tag' | transloco }}</label><input [value]="row.panel" (input)="patchRow('panel', $any($event.target).value)" /></div>
+      <div class="field"><label>{{ 'lv.load' | transloco }}</label><input [value]="row.loadName" (input)="patchRow('loadName', $any($event.target).value)" /></div>
+      <app-number-field [label]="'lv.ratedKw' | transloco" unit="kW" [value]="row.ratedLoadKW" (valueChange)="patchRow('ratedLoadKW', $event)" />
+      <app-select-field [label]="'lv.voltage' | transloco" [value]="row.voltage" [options]="enums.voltage" (valueChange)="patchRow('voltage', +$event)" />
+      <app-number-field label="PF" [value]="row.pf" (valueChange)="patchRow('pf', $event || 0)" />
+      <app-select-field [label]="'lv.motor' | transloco" [value]="row.isMotorLoad" [options]="['Yes','No']" (valueChange)="patchRow('isMotorLoad', $event === 'Yes' ? 'Yes' : 'No')" />
+    </div>
+    <div class="section-title">{{ 'lv.tabConditions' | transloco }}</div>
+    <div class="field-grid cols-3">
+      <app-select-field [label]="'lv.place' | transloco" [value]="row.place" [options]="enums.installationPlace" (valueChange)="patchRow('place', $event)" />
+      <app-select-field [label]="'lv.area' | transloco" [value]="row.area" [options]="enums.installationArea" (valueChange)="patchRow('area', $event)" />
+      <app-select-field [label]="'lv.conductor' | transloco" [value]="row.conductor" [options]="enums.conductorMaterial" (valueChange)="patchRow('conductor', $event)" />
+      <app-select-field [label]="'lv.insulation' | transloco" [value]="row.insulation" [options]="enums.insulation" (valueChange)="patchRow('insulation', $event)" />
+      <app-select-field [label]="'lv.armour' | transloco" [value]="row.armour" [options]="enums.armour" (valueChange)="patchRow('armour', $event)" />
+      <app-select-field [label]="'lv.cores' | transloco" [value]="row.noCores" [options]="enums.noCores" (valueChange)="patchRow('noCores', +$event)" />
+      <app-select-field [label]="'lv.size' | transloco" [value]="row.cableSize" [options]="enums.cableSize" (valueChange)="patchRow('cableSize', +$event)" />
+      <app-number-field [label]="'lv.runs' | transloco" [value]="row.noRuns" (valueChange)="patchRow('noRuns', $event || 1)" />
+      <app-number-field [label]="'lv.length' | transloco" unit="m" [value]="row.cableLength" (valueChange)="patchRow('cableLength', $event)" />
+      <app-number-field [label]="'lv.allowedVd' | transloco" unit="%" [value]="row.allowedVDPct" (valueChange)="patchRow('allowedVDPct', $event || 0)" />
+    </div>
+    <div class="section-title">{{ 'lv.cb' | transloco }}</div>
+    <div class="field-grid cols-4">
+      <app-select-field [label]="'lv.cb' | transloco" [value]="row.feederRatingCB" [options]="enums.breakerRating" (valueChange)="patchRow('feederRatingCB', +$event)" />
+      <app-number-field [label]="'lv.trip' | transloco" unit="A" [value]="row.pdTripSetting" (valueChange)="patchRow('pdTripSetting', $event)" />
+      <app-select-field [label]="'lv.tripType' | transloco" [value]="row.pdTripType" [options]="enums.pdTripTypeWide" (valueChange)="patchRow('pdTripType', $event)" />
+      <app-select-field [label]="'lv.curve' | transloco" [value]="row.tripCurve" [options]="enums.tripCurve" (valueChange)="patchRow('tripCurve', $event)" />
+    </div>
+    @if (store.rowResults().get(row.id); as res) {
+      <app-metric-strip style="display:block;margin-top:1.1rem" [chips]="[
+        chip('FLC', res.flc, 1),
+        chip('Iz′', res.deratedAmpacity, 1),
+        chip('VD %', res.cableVDPct, 2),
+        chip('Start VD', res.startVDPct, 2),
+        { label: 'Status', value: txt(res.remarks ?? '–'), strong: true }
+      ]" />
+    }
+  }
+  @if (editing(); as row) {
+    <div footer class="dlg-foot">
+      <app-button variant="danger" [label]="'common.delete' | transloco" icon="trash" (clicked)="confirmDelete(row.id)" />
+      <div class="toolbar-row">
+        <app-button [label]="'lv.duplicate' | transloco" icon="copy" (clicked)="store.duplicateRow(row.id); editing.set(null)" />
+        <app-button variant="primary" [label]="'common.done' | transloco" icon="check" (clicked)="saveEditor()" />
+      </div>
+    </div>
+  }
+</app-dialog>
+
+<app-dialog [(open)]="pdfOpen" [header]="'common.exportPdf' | transloco" width="min(400px, 94vw)">
+  <app-checkbox [checked]="pdfOpts().cover" (checkedChange)="setPdfOpt('cover', $event)" [label]="'lv.pdfCover' | transloco" />
+  <app-checkbox [checked]="pdfOpts().params" (checkedChange)="setPdfOpt('params', $event)" [label]="'lv.pdfParams' | transloco" />
+  <app-checkbox [checked]="pdfOpts().schedule" (checkedChange)="setPdfOpt('schedule', $event)" [label]="'lv.pdfSchedule' | transloco" />
+  <app-checkbox [checked]="pdfOpts().detailed" (checkedChange)="setPdfOpt('detailed', $event)" [label]="'lv.pdfDetailed' | transloco" />
+  <div footer class="dlg-foot end">
+    <app-button variant="primary" [label]="'common.generate' | transloco" icon="file-text" (clicked)="exportPdf()" />
+  </div>
+</app-dialog>

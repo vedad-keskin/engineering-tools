@@ -1,24 +1,29 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { App } from './app';
+import { provideTransloco } from '@jsverse/transloco';
+import { HttpLoader } from './core/transloco-loader';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-    })
-      .compileComponents();
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        provideHttpClient(),
+        provideTransloco({
+          config: { availableLangs: ['en'], defaultLang: 'en', reRenderOnLangChange: true },
+          loader: HttpLoader,
+        }),
+      ],
+    }).compileComponents();
   });
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it('should render title', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, engineering-tools');
+    expect(fixture.componentInstance).toBeTruthy();
   });
 });

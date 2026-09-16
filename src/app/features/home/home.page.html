@@ -1,0 +1,85 @@
+<section class="hero">
+  <div class="hero-glow"></div>
+  <img src="logo-512.png" width="132" height="132" alt="" class="hero-logo" />
+  <div class="hero-text">
+    <span class="eyebrow"><app-icon name="ruler" [size]="13" /> {{ 'home.eyebrow' | transloco }}</span>
+    <h1>{{ 'home.headline' | transloco }}</h1>
+    <p>{{ 'home.lede' | transloco }}</p>
+    <div class="stats">
+      <span class="stat"><strong>{{ availableCount }}</strong> {{ 'home.statTools' | transloco }}</span>
+      <span class="stat"><strong>{{ projectCount() }}</strong> {{ 'home.statProjects' | transloco }}</span>
+      <span class="stat"><app-icon name="wifi_off" [size]="14" /> {{ 'home.statOffline' | transloco }}</span>
+      <span class="stat"><app-icon name="shield" [size]="14" /> {{ 'home.statLocal' | transloco }}</span>
+    </div>
+  </div>
+</section>
+
+<div class="tool-grid">
+  @for (tool of tools; track tool.path; let i = $index) {
+    <a class="tool-card" [class.soon]="tool.status === 'warn'" [routerLink]="tool.path" [style.--i]="i" [style.--tone]="tool.tone">
+      <div class="tool-top">
+        <span class="tile"><app-icon [name]="tool.icon" [size]="22" /></span>
+        <app-status-badge [label]="(tool.status === 'ok' ? 'home.available' : 'home.soon') | transloco" [tone]="tool.status" />
+      </div>
+      <strong class="tool-name">{{ ('home.tools.' + tool.key + '.name') | transloco }}</strong>
+      <span class="tool-desc">{{ ('home.tools.' + tool.key + '.desc') | transloco }}</span>
+      <div class="tool-foot">
+        <span class="std">{{ tool.standard }}</span>
+        <span class="go">
+          <app-kbd>{{ tool.keyNo }}</app-kbd>
+          <app-icon name="chevron-right" [size]="16" class="arrow" />
+        </span>
+      </div>
+    </a>
+  }
+</div>
+
+<section class="recent">
+  <div class="recent-head">
+    <h2>{{ 'home.recent' | transloco }}</h2>
+    @if (recent().length) {
+      <span class="count">{{ recent().length }}</span>
+    }
+  </div>
+
+  @if (!recent().length) {
+    <div class="panel empty-wrap">
+      <img src="logo-128.png" width="56" height="56" alt="" class="watermark" />
+      <app-empty-state [title]="'home.noRecent' | transloco" [body]="'home.noRecentBody' | transloco" />
+    </div>
+  } @else {
+    <div class="tablewrap">
+      <table class="sched recent-table">
+        <thead>
+          <tr>
+            <th>{{ 'home.name' | transloco }}</th>
+            <th>{{ 'home.tool' | transloco }}</th>
+            <th>{{ 'home.updated' | transloco }}</th>
+            <th class="num">{{ 'common.actions' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of recent(); track p.id) {
+            <tr>
+              <td class="strong">
+                <a [routerLink]="openPath(p)" class="proj-link">
+                  <span class="mini"><app-icon [name]="toolIcon(p.toolId)" [size]="15" /></span>
+                  {{ p.name }}
+                </a>
+              </td>
+              <td class="muted">{{ ('home.tools.' + toolKey(p.toolId) + '.name') | transloco }}</td>
+              <td class="muted mono">{{ fmtDate(p.updatedAt) }}</td>
+              <td class="num">
+                <span class="rowactions">
+                  <app-button variant="ghost" size="sm" icon="copy" [title]="'common.duplicate' | transloco" (clicked)="duplicate(p)" />
+                  <app-button variant="ghost" size="sm" icon="trash" [title]="'common.delete' | transloco" (clicked)="remove(p)" />
+                </span>
+                <a [routerLink]="openPath(p)" class="open-link">{{ 'common.open' | transloco }}</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

@@ -1,1 +1,543 @@
-/* You can add global styles to this file, and also import other style files */
+/* ===================================================================
+   DESIGN TOKENS
+   Palette derived from the logo: navy gear (#122d50) + blue ruler.
+   =================================================================== */
+:root {
+  --et-bg: #eef1f5;
+  --et-surface: #ffffff;
+  --et-surface-2: #f4f6f9;
+  --et-surface-3: #e9edf2;
+  --et-border: #dbe1e8;
+  --et-border-strong: #c2cad4;
+  --et-ink: #172033;
+  --et-ink-soft: #5b6675;
+  --et-ink-faint: #8b95a3;
+  --et-accent: #0f5fc9;
+  --et-accent-dark: #0a4a9e;
+  --et-accent-soft: #e7f0fd;
+  --et-accent-glow: rgba(15, 95, 201, 0.25);
+  --et-navy: #0b1c33;
+  --et-navy-2: #122d50;
+  --et-rail: #0b1c33;
+  --et-rail-ink: #eaf1fb;
+  --et-rail-muted: #8fa3c0;
+  --et-ok: #0f7a3d;
+  --et-ok-bg: #e7f7ee;
+  --et-ok-border: #a9e2bf;
+  --et-fail: #b3241c;
+  --et-fail-bg: #fdecec;
+  --et-fail-border: #f3b7b2;
+  --et-warn: #8a5a00;
+  --et-warn-bg: #fff6df;
+  --et-warn-border: #f0d894;
+  --et-mono: "JetBrains Mono", "Cascadia Mono", "SF Mono", Consolas, ui-monospace, monospace;
+  --et-sans: Inter, -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+  --et-radius: 10px;
+  --et-shadow-1: 0 1px 2px rgba(11, 28, 51, 0.05), 0 1px 1px rgba(11, 28, 51, 0.03);
+  --et-shadow-2: 0 8px 24px rgba(11, 28, 51, 0.1);
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  color-scheme: light;
+}
+
+html.app-dark {
+  --et-bg: #0d141f;
+  --et-surface: #131c2a;
+  --et-surface-2: #1a2536;
+  --et-surface-3: #212e42;
+  --et-border: #26344a;
+  --et-border-strong: #34445c;
+  --et-ink: #e6edf7;
+  --et-ink-soft: #a3b1c6;
+  --et-ink-faint: #74839a;
+  --et-accent: #4d8ff0;
+  --et-accent-dark: #3a7be0;
+  --et-accent-soft: #15315a;
+  --et-accent-glow: rgba(77, 143, 240, 0.3);
+  --et-rail: #080f1c;
+  --et-rail-ink: #eaf1fb;
+  --et-rail-muted: #7f93b0;
+  --et-ok: #4ade80;
+  --et-ok-bg: #143124;
+  --et-ok-border: #1f5a3c;
+  --et-fail: #f87171;
+  --et-fail-bg: #3a1b1b;
+  --et-fail-border: #6b2a2a;
+  --et-warn: #fbbf24;
+  --et-warn-bg: #3a2c12;
+  --et-warn-border: #6b5220;
+  --et-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --et-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---------- base ---------- */
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--et-bg);
+  color: var(--et-ink);
+  font-family: var(--et-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--et-accent-soft);
+}
+
+a {
+  color: var(--et-accent);
+}
+
+/* ---------- page header ---------- */
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.page-head h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.page-head p {
+  margin: 0.3rem 0 0;
+  color: var(--et-ink-soft);
+  font-size: 0.86rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--et-accent);
+  margin-bottom: 0.4rem;
+}
+
+/* ---------- cards / panels ---------- */
+.card,
+.panel {
+  background: var(--et-surface);
+  border: 1px solid var(--et-border);
+  border-radius: var(--et-radius);
+  padding: 1.15rem 1.3rem;
+  box-shadow: var(--et-shadow-1);
+}
+
+.panel + .panel,
+.card + .card {
+  margin-top: 1rem;
+}
+
+.panel h2,
+.card h2 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--et-accent-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.85rem;
+}
+
+html.app-dark .panel h2,
+html.app-dark .card h2 {
+  color: var(--et-accent);
+}
+
+.section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--et-accent-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 1.4rem 0 0.7rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--et-border);
+}
+
+.section-title:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+/* ---------- forms ---------- */
+.field-grid {
+  display: grid;
+  gap: 0.9rem 1rem;
+}
+
+.field-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.field-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.field-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.field label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--et-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.25;
+}
+
+.field .hint {
+  font-size: 0.72rem;
+  color: var(--et-ink-faint);
+}
+
+.field input,
+.field select,
+.field textarea,
+.num-input {
+  width: 100%;
+  border: 1px solid var(--et-border-strong);
+  background: var(--et-surface);
+  color: inherit;
+  border-radius: 7px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.num-input:focus {
+  border-color: var(--et-accent);
+  box-shadow: 0 0 0 3px var(--et-accent-soft);
+}
+
+.field input:read-only {
+  background: var(--et-surface-2);
+  color: var(--et-ink-soft);
+}
+
+.field select {
+  appearance: none;
+  padding-right: 2rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b95a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.55rem center;
+}
+
+/* ---------- metric chips ---------- */
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.metric-chip {
+  border: 1px solid var(--et-border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  background: var(--et-surface-2);
+}
+
+.metric-chip .lbl {
+  font-size: 0.66rem;
+  color: var(--et-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.metric-chip .val {
+  font-family: var(--et-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  padding: 0.18rem 0.6rem;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.badge.ok { background: var(--et-ok-bg); color: var(--et-ok); border-color: var(--et-ok-border); }
+.badge.fail { background: var(--et-fail-bg); color: var(--et-fail); border-color: var(--et-fail-border); }
+.badge.warn { background: var(--et-warn-bg); color: var(--et-warn); border-color: var(--et-warn-border); }
+.badge.muted { background: var(--et-surface-2); color: var(--et-ink-soft); border-color: var(--et-border); }
+
+/* ---------- tables ---------- */
+.tablewrap {
+  overflow-x: auto;
+  border: 1px solid var(--et-border);
+  border-radius: var(--et-radius);
+  background: var(--et-surface);
+  box-shadow: var(--et-shadow-1);
+}
+
+table.sched {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+}
+
+table.sched thead th {
+  background: var(--et-surface-2);
+  color: var(--et-ink-soft);
+  text-align: left;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  border-bottom: 1px solid var(--et-border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+table.sched td {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--et-border);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+table.sched tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+table.sched tbody tr {
+  transition: background var(--dur-1) var(--ease);
+}
+
+table.sched tbody tr.clickable {
+  cursor: pointer;
+}
+
+table.sched tbody tr:hover {
+  background: var(--et-accent-soft);
+}
+
+table.sched td.num,
+table.sched th.num {
+  font-family: var(--et-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+table.sched td.strong {
+  font-weight: 650;
+}
+
+table.sched .rowactions {
+  display: inline-flex;
+  gap: 0.2rem;
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease);
+}
+
+table.sched tr:hover .rowactions,
+table.sched tr:focus-within .rowactions {
+  opacity: 1;
+}
+
+/* ---------- misc ---------- */
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.toolbar-row .sep {
+  width: 1px;
+  height: 1.4rem;
+  background: var(--et-border);
+  margin: 0 0.25rem;
+}
+
+.empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--et-ink-soft);
+}
+
+.results-bar {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--et-surface-2);
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.results-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--et-accent);
+  border-radius: 99px;
+  transition: width var(--dur-2) var(--ease);
+}
+
+.diagram-canvas {
+  width: 100%;
+  height: min(72vh, 820px);
+  background:
+    linear-gradient(var(--et-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--et-border) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border: 1px solid var(--et-border);
+  border-radius: var(--et-radius);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+.linkish {
+  background: none;
+  border: 0;
+  color: var(--et-accent);
+  cursor: pointer;
+  padding: 0.2rem 0;
+  font-weight: 600;
+}
+
+.linkish:hover {
+  text-decoration: underline;
+}
+
+.mono {
+  font-family: var(--et-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--et-ink-soft);
+}
+
+kbd {
+  font-family: var(--et-mono);
+  font-size: 0.72rem;
+  border: 1px solid var(--et-border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+  background: var(--et-surface-2);
+}
+
+/* page enter animation, applied to routed component hosts */
+.page-enter {
+  animation: page-in var(--dur-2) var(--ease);
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* view transitions (router) */
+::view-transition-old(root) {
+  animation: 120ms var(--ease) both fade-out;
+}
+::view-transition-new(root) {
+  animation: 200ms var(--ease) both fade-in-up;
+}
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes fade-in-up { from { opacity: 0; transform: translateY(6px); } }
+
+@media (max-width: 800px) {
+  .field-grid.cols-2,
+  .field-grid.cols-3,
+  .field-grid.cols-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .field-grid.cols-2,
+  .field-grid.cols-3,
+  .field-grid.cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
+}
