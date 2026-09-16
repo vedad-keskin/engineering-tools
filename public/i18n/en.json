@@ -17,6 +17,36 @@
     "earthing": "Earthing",
     "pue": "Building PUE"
   },
+  "pwa": {
+    "online": "Online",
+    "offline": "Offline",
+    "install": "Install app",
+    "installed": "Installed",
+    "installOk": "App installed"
+  },
+  "tour": {
+    "skip": "Skip",
+    "start": "Explore tools",
+    "progress": "Tour progress",
+    "welcome": {
+      "title": "Welcome to Engineering Tools",
+      "body": "Cable sizing, power networks and lightning risk, all in one place. Your work is saved on this device automatically."
+    },
+    "privacy": {
+      "title": "Private by design",
+      "body": "Nothing is uploaded. Every calculation runs in your browser and keeps working without an internet connection.",
+      "onlineNow": "You are online",
+      "offlineNow": "You are offline — still fully working"
+    },
+    "keys": {
+      "title": "Move fast with the keyboard",
+      "body": "Press a number to jump straight to a tool, or ? to see every shortcut."
+    },
+    "go": {
+      "title": "You're all set",
+      "body": "Pick a tool from the home page and start calculating. You can install the app from the footer any time."
+    }
+  },
   "theme": {
     "light": "Light",
     "dark": "Dark"

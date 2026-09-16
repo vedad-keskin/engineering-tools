@@ -17,6 +17,36 @@
     "earthing": "Messa a terra",
     "pue": "PUE edificio"
   },
+  "pwa": {
+    "online": "Online",
+    "offline": "Offline",
+    "install": "Installa app",
+    "installed": "Installata",
+    "installOk": "App installata"
+  },
+  "tour": {
+    "skip": "Salta",
+    "start": "Esplora gli strumenti",
+    "progress": "Avanzamento del tour",
+    "welcome": {
+      "title": "Benvenuto in Engineering Tools",
+      "body": "Dimensionamento cavi, reti elettriche e rischio fulmini in un unico posto. Il tuo lavoro viene salvato automaticamente su questo dispositivo."
+    },
+    "privacy": {
+      "title": "Privato per progettazione",
+      "body": "Nulla viene caricato online. Ogni calcolo viene eseguito nel browser e continua a funzionare senza connessione internet.",
+      "onlineNow": "Sei online",
+      "offlineNow": "Sei offline — tutto funziona ancora"
+    },
+    "keys": {
+      "title": "Naviga veloce con la tastiera",
+      "body": "Premi un numero per aprire direttamente uno strumento, oppure ? per vedere tutte le scorciatoie."
+    },
+    "go": {
+      "title": "Tutto pronto",
+      "body": "Scegli uno strumento dalla home e inizia a calcolare. Puoi installare l'app in qualsiasi momento dal piè di pagina."
+    }
+  },
   "theme": {
     "light": "Chiaro",
     "dark": "Scuro"

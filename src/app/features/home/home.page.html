@@ -83,3 +83,7 @@
     </div>
   }
 </section>
+
+@if (tourOpen()) {
+  <app-welcome-tour (closed)="tourOpen.set(false)" />
+}

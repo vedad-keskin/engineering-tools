@@ -1,12 +1,13 @@
-import { Component, DestroyRef, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter } from 'rxjs';
 import { ThemeService } from './core/theme.service';
 import { APP_LANGS, AppLang, LocaleService } from './core/locale.service';
 import { ShortcutsService } from './core/shortcuts.service';
+import { PwaService } from './core/pwa.service';
 import { Icon, Kbd, Flag, Dialog, ToastHost, ConfirmHost, ToastService } from './ui';
 
 export interface NavItem {
@@ -42,6 +43,10 @@ export class App {
   readonly shortcuts = inject(ShortcutsService);
   private readonly updates = inject(SwUpdate, { optional: true });
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
+  readonly pwa = inject(PwaService);
+  /** True for ~600ms after connectivity flips, drives the chip pulse. */
+  readonly netPulse = signal(false);
 
   readonly nav = NAV_ITEMS;
   readonly langs = APP_LANGS;
@@ -68,6 +73,17 @@ export class App {
       if (c.id === 'nav' && c.index !== undefined) this.goIndex(c.index);
     });
 
+    let prevOnline = this.pwa.online();
+    effect(() => {
+      const cur = this.pwa.online();
+      if (cur === prevOnline) return;
+      prevOnline = cur;
+      untracked(() => {
+        this.netPulse.set(true);
+        setTimeout(() => this.netPulse.set(false), 600);
+      });
+    });
+
     if (this.updates?.isEnabled) {
       this.updates.versionUpdates
         .pipe(filter((e): e is VersionReadyEvent => e.type === 'VERSION_READY'))
@@ -90,7 +106,7 @@ export class App {
       return;
     }
     // Digit / letter shortcuts must not fire behind an open modal.
-    if (document.querySelector('dialog[open]')) return;
+    if (document.querySelector('dialog[open], [aria-modal="true"]')) return;
     this.shortcuts.handle(event);
   }
 
@@ -125,6 +141,11 @@ export class App {
   pickLang(lang: AppLang): void {
     this.locale.setLang(lang);
     this.langOpen.set(false);
+  }
+
+  async installApp(): Promise<void> {
+    const result = await this.pwa.promptInstall();
+    if (result === 'accepted') this.toast.success(this.transloco.translate('pwa.installOk'));
   }
 
   togglePin(): void {

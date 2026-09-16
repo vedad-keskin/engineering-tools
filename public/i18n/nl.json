@@ -17,6 +17,36 @@
     "earthing": "Aarding",
     "pue": "Gebouw-PUE"
   },
+  "pwa": {
+    "online": "Online",
+    "offline": "Offline",
+    "install": "App installeren",
+    "installed": "Geïnstalleerd",
+    "installOk": "App geïnstalleerd"
+  },
+  "tour": {
+    "skip": "Overslaan",
+    "start": "Tools verkennen",
+    "progress": "Voortgang rondleiding",
+    "welcome": {
+      "title": "Welkom bij Engineering Tools",
+      "body": "Kabelberekening, stroomnetwerken en blikseminslagrisico op één plek. Je werk wordt automatisch op dit apparaat opgeslagen."
+    },
+    "privacy": {
+      "title": "Privé van ontwerp",
+      "body": "Er wordt niets geüpload. Elke berekening draait in je browser en blijft werken zonder internetverbinding.",
+      "onlineNow": "Je bent online",
+      "offlineNow": "Je bent offline — alles werkt nog steeds"
+    },
+    "keys": {
+      "title": "Snel navigeren met het toetsenbord",
+      "body": "Druk op een cijfer om direct naar een tool te gaan, of op ? voor alle sneltoetsen."
+    },
+    "go": {
+      "title": "Je bent klaar",
+      "body": "Kies een tool op de startpagina en begin met rekenen. Je kunt de app altijd installeren via de voettekst."
+    }
+  },
   "theme": {
     "light": "Licht",
     "dark": "Donker"

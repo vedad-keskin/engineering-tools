@@ -17,6 +17,36 @@
     "earthing": "Erdung",
     "pue": "Gebäude-PUE"
   },
+  "pwa": {
+    "online": "Online",
+    "offline": "Offline",
+    "install": "App installieren",
+    "installed": "Installiert",
+    "installOk": "App installiert"
+  },
+  "tour": {
+    "skip": "Überspringen",
+    "start": "Tools entdecken",
+    "progress": "Fortschritt der Tour",
+    "welcome": {
+      "title": "Willkommen bei Engineering Tools",
+      "body": "Kabeldimensionierung, Stromnetze und Blitzschutzrisiko an einem Ort. Ihre Arbeit wird automatisch auf diesem Gerät gespeichert."
+    },
+    "privacy": {
+      "title": "Datenschutz von Grund auf",
+      "body": "Es wird nichts hochgeladen. Jede Berechnung läuft in Ihrem Browser und funktioniert auch ohne Internetverbindung.",
+      "onlineNow": "Sie sind online",
+      "offlineNow": "Sie sind offline — alles funktioniert weiterhin"
+    },
+    "keys": {
+      "title": "Schnell per Tastatur",
+      "body": "Drücken Sie eine Zahl, um direkt zu einem Tool zu springen, oder ? für alle Tastenkürzel."
+    },
+    "go": {
+      "title": "Alles bereit",
+      "body": "Wählen Sie ein Tool auf der Startseite und beginnen Sie mit dem Rechnen. Die App lässt sich jederzeit über die Fußzeile installieren."
+    }
+  },
   "theme": {
     "light": "Hell",
     "dark": "Dunkel"

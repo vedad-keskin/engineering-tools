@@ -17,6 +17,36 @@
     "earthing": "Mise à la terre",
     "pue": "PUE bâtiment"
   },
+  "pwa": {
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "install": "Installer l'app",
+    "installed": "Installée",
+    "installOk": "Application installée"
+  },
+  "tour": {
+    "skip": "Passer",
+    "start": "Explorer les outils",
+    "progress": "Progression de la visite",
+    "welcome": {
+      "title": "Bienvenue dans Engineering Tools",
+      "body": "Dimensionnement de câbles, réseaux électriques et risque foudre, réunis au même endroit. Votre travail est enregistré automatiquement sur cet appareil."
+    },
+    "privacy": {
+      "title": "Privé par conception",
+      "body": "Rien n'est envoyé en ligne. Chaque calcul s'exécute dans votre navigateur et continue de fonctionner sans connexion internet.",
+      "onlineNow": "Vous êtes en ligne",
+      "offlineNow": "Vous êtes hors ligne — tout fonctionne encore"
+    },
+    "keys": {
+      "title": "Naviguez vite au clavier",
+      "body": "Appuyez sur un chiffre pour ouvrir directement un outil, ou sur ? pour voir tous les raccourcis."
+    },
+    "go": {
+      "title": "Tout est prêt",
+      "body": "Choisissez un outil sur la page d'accueil et commencez à calculer. Vous pouvez installer l'application à tout moment depuis le pied de page."
+    }
+  },
   "theme": {
     "light": "Clair",
     "dark": "Sombre"

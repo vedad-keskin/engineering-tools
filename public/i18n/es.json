@@ -17,6 +17,36 @@
     "earthing": "Puesta a tierra",
     "pue": "PUE del edificio"
   },
+  "pwa": {
+    "online": "En línea",
+    "offline": "Sin conexión",
+    "install": "Instalar app",
+    "installed": "Instalada",
+    "installOk": "Aplicación instalada"
+  },
+  "tour": {
+    "skip": "Omitir",
+    "start": "Explorar herramientas",
+    "progress": "Progreso del recorrido",
+    "welcome": {
+      "title": "Bienvenido a Engineering Tools",
+      "body": "Dimensionamiento de cables, redes eléctricas y riesgo de rayos en un solo lugar. Tu trabajo se guarda automáticamente en este dispositivo."
+    },
+    "privacy": {
+      "title": "Privado por diseño",
+      "body": "No se sube nada. Cada cálculo se ejecuta en tu navegador y sigue funcionando sin conexión a internet.",
+      "onlineNow": "Estás en línea",
+      "offlineNow": "Estás sin conexión — todo sigue funcionando"
+    },
+    "keys": {
+      "title": "Muévete rápido con el teclado",
+      "body": "Pulsa un número para ir directamente a una herramienta, o ? para ver todos los atajos."
+    },
+    "go": {
+      "title": "Todo listo",
+      "body": "Elige una herramienta en la página de inicio y empieza a calcular. Puedes instalar la app en cualquier momento desde el pie de página."
+    }
+  },
   "theme": {
     "light": "Claro",
     "dark": "Oscuro"

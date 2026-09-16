@@ -79,8 +79,22 @@
       <router-outlet />
     </div>
     <footer class="footer">
-      <app-icon name="shield" [size]="13" />
-      {{ 'app.footer' | transloco }}
+      <div class="status-chips">
+        <span class="chip net" [class.off]="!pwa.online()" [class.pulse]="netPulse()" role="status" aria-live="polite">
+          <app-icon [name]="pwa.online() ? 'wifi' : 'wifi_off'" [size]="13" />
+          {{ (pwa.online() ? 'pwa.online' : 'pwa.offline') | transloco }}
+        </span>
+        @if (pwa.canInstall() && !pwa.installed()) {
+          <button type="button" class="chip install" (click)="installApp()">
+            <app-icon name="download" [size]="13" />
+            {{ 'pwa.install' | transloco }}
+          </button>
+        }
+      </div>
+      <span class="footer-note">
+        <app-icon name="shield" [size]="13" />
+        {{ 'app.footer' | transloco }}
+      </span>
     </footer>
   </main>
 </div>
