@@ -73,7 +73,8 @@
     "open": "Apri",
     "close": "Chiudi",
     "duplicate": "Duplica",
-    "actions": "Azioni"
+    "actions": "Azioni",
+    "loading": "Caricamento"
   },
   "home": {
     "headline": "Progettazione elettrica, nel browser",

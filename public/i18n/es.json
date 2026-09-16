@@ -73,7 +73,8 @@
     "open": "Abrir",
     "close": "Cerrar",
     "duplicate": "Duplicar",
-    "actions": "Acciones"
+    "actions": "Acciones",
+    "loading": "Cargando"
   },
   "home": {
     "headline": "Diseño eléctrico, en el navegador",

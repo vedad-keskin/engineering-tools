@@ -5,7 +5,7 @@ import { StatusBadge } from '../../shared/status-badge';
 import { EmptyState } from '../../shared/empty-state';
 import { ProjectRepository, type ProjectMeta, type ToolId } from '../../core/storage/project-repository';
 import { LocaleService } from '../../core/locale.service';
-import { Button, ConfirmService, Icon, Kbd, ToastService } from '../../ui';
+import { Button, ConfirmService, Icon, Kbd, SkeletonBar, SkeletonTable, ToastService } from '../../ui';
 import { WelcomeTour, shouldShowTour } from './welcome-tour';
 
 interface ToolCard {
@@ -20,7 +20,7 @@ interface ToolCard {
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink, TranslocoPipe, StatusBadge, EmptyState, Button, Icon, Kbd, WelcomeTour],
+  imports: [RouterLink, TranslocoPipe, StatusBadge, EmptyState, Button, Icon, Kbd, WelcomeTour, SkeletonTable, SkeletonBar],
   templateUrl: './home.page.html',
   styleUrl: './home.page.css',
 })
@@ -32,6 +32,17 @@ export class HomePage implements OnInit {
   readonly locale = inject(LocaleService);
   readonly recent = signal<ProjectMeta[]>([]);
   readonly tourOpen = signal(false);
+  readonly ready = signal(false);
+
+  readonly recentHeaders = computed(() => {
+    this.locale.lang();
+    return [
+      this.transloco.translate('home.name'),
+      this.transloco.translate('home.tool'),
+      this.transloco.translate('home.updated'),
+      this.transloco.translate('common.actions'),
+    ];
+  });
 
   readonly tools: ToolCard[] = [
     { path: '/lv-cable-sizing', key: 'lv', standard: 'IEC 60364', status: 'ok', icon: 'zap', tone: '#0f5fc9', keyNo: 2 },
@@ -51,7 +62,11 @@ export class HomePage implements OnInit {
   }
 
   async refresh(): Promise<void> {
-    this.recent.set(await this.repo.list());
+    try {
+      this.recent.set(await this.repo.list());
+    } finally {
+      this.ready.set(true);
+    }
   }
 
   fmtDate(ts: number): string {

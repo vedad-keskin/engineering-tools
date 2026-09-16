@@ -12,7 +12,7 @@ import { LocaleService } from '../../core/locale.service';
 import { PrintService, escapeHtml } from '../../core/export/print.service';
 import { downloadCsv, downloadJson, pickJsonFile, readJsonFile } from '../../core/export/file-export';
 import { ShortcutsService } from '../../core/shortcuts.service';
-import { Button, Checkbox, ConfirmService, Dialog, Icon, Tab, Tabs, ToastService } from '../../ui';
+import { Button, Checkbox, ConfirmService, Dialog, Icon, SkeletonTable, Tab, Tabs, ToastService } from '../../ui';
 import { ENUMS } from './engine/data';
 import { LvStore } from './lv.store';
 import type { LvCableRow, LvState } from './engine/state';
@@ -34,6 +34,7 @@ import type { LvCableRow, LvState } from './engine/state';
     EmptyState,
     ProjectInfoForm,
     NumPipe,
+    SkeletonTable,
   ],
   providers: [LvStore],
   templateUrl: './lv-cable.page.html',

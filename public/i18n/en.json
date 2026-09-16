@@ -73,7 +73,8 @@
     "open": "Open",
     "close": "Close",
     "duplicate": "Duplicate",
-    "actions": "Actions"
+    "actions": "Actions",
+    "loading": "Loading"
   },
   "home": {
     "headline": "Electrical design, in the browser",

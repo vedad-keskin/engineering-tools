@@ -29,6 +29,7 @@ export class PowerStore {
   readonly projectId = signal<string | null>(null);
   readonly state = signal<PowerState>(defaultPowerState());
   readonly dirty = signal(false);
+  readonly ready = signal(false);
 
   readonly scenario = computed(() => {
     const s = this.state();
@@ -39,18 +40,22 @@ export class PowerStore {
   readonly equipment = computed(() => this.state().nodes.filter((n) => n.type !== 'load'));
 
   async loadLatest(): Promise<void> {
-    const list = await this.repo.list('power-network');
-    if (!list.length) {
-      this.history.reset(this.state());
+    try {
+      const list = await this.repo.list('power-network');
+      if (!list.length) {
+        this.history.reset(this.state());
+        this.syncHistory();
+        return;
+      }
+      const stored = await this.repo.get<PowerState>(list[0].id);
+      if (!stored) return;
+      this.projectId.set(stored.id);
+      this.state.set(stored.data);
+      this.history.reset(stored.data);
       this.syncHistory();
-      return;
+    } finally {
+      this.ready.set(true);
     }
-    const stored = await this.repo.get<PowerState>(list[0].id);
-    if (!stored) return;
-    this.projectId.set(stored.id);
-    this.state.set(stored.data);
-    this.history.reset(stored.data);
-    this.syncHistory();
   }
 
   patch(partial: Partial<PowerState>): void {

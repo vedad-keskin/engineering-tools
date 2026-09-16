@@ -93,7 +93,9 @@
       </div>
     </div>
 
-    @if (!store.state().rows.length) {
+    @if (!store.ready()) {
+      <app-skeleton-table [columns]="10" [rows]="6" [label]="'common.loading' | transloco" />
+    } @else if (!store.state().rows.length) {
       <div class="panel">
         <app-empty-state [title]="'lv.emptyTitle' | transloco" [body]="'lv.emptyBody' | transloco" />
       </div>

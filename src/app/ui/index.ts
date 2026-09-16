@@ -6,6 +6,7 @@ export { Stepper, Step } from './stepper';
 export { Dialog } from './dialog';
 export { Checkbox } from './checkbox';
 export { Progress } from './progress';
+export { SkeletonTable, SkeletonBar } from './skeleton';
 export { Flag } from './flag';
 export { ToastService } from './toast.service';
 export { ToastHost } from './toast-host';

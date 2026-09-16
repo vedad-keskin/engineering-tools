@@ -7,7 +7,16 @@
     <p>{{ 'home.lede' | transloco }}</p>
     <div class="stats">
       <span class="stat"><strong>{{ availableCount }}</strong> {{ 'home.statTools' | transloco }}</span>
-      <span class="stat"><strong>{{ projectCount() }}</strong> {{ 'home.statProjects' | transloco }}</span>
+      <span class="stat">
+        <strong>
+          @if (ready()) {
+            {{ projectCount() }}
+          } @else {
+            <app-skeleton-bar />
+          }
+        </strong>
+        {{ 'home.statProjects' | transloco }}
+      </span>
       <span class="stat"><app-icon name="wifi_off" [size]="14" /> {{ 'home.statOffline' | transloco }}</span>
       <span class="stat"><app-icon name="shield" [size]="14" /> {{ 'home.statLocal' | transloco }}</span>
     </div>
@@ -42,7 +51,9 @@
     }
   </div>
 
-  @if (!recent().length) {
+  @if (!ready()) {
+    <app-skeleton-table [rows]="5" [headers]="recentHeaders()" [label]="'common.loading' | transloco" />
+  } @else if (!recent().length) {
     <div class="panel empty-wrap">
       <img src="logo-128.png" width="56" height="56" alt="" class="watermark" />
       <app-empty-state [title]="'home.noRecent' | transloco" [body]="'home.noRecentBody' | transloco" />

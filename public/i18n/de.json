@@ -73,7 +73,8 @@
     "open": "Öffnen",
     "close": "Schließen",
     "duplicate": "Duplizieren",
-    "actions": "Aktionen"
+    "actions": "Aktionen",
+    "loading": "Laden"
   },
   "home": {
     "headline": "Elektrische Planung im Browser",

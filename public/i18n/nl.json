@@ -73,7 +73,8 @@
     "open": "Openen",
     "close": "Sluiten",
     "duplicate": "Dupliceren",
-    "actions": "Acties"
+    "actions": "Acties",
+    "loading": "Laden"
   },
   "home": {
     "headline": "Elektrisch ontwerp, in de browser",

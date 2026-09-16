@@ -73,7 +73,8 @@
     "open": "Ouvrir",
     "close": "Fermer",
     "duplicate": "Dupliquer",
-    "actions": "Actions"
+    "actions": "Actions",
+    "loading": "Chargement"
   },
   "home": {
     "headline": "Conception électrique, dans le navigateur",

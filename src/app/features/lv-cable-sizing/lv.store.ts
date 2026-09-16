@@ -25,6 +25,7 @@ export class LvStore {
   readonly state = signal<LvState>(defaultLvState());
   readonly selectedIds = signal<number[]>([]);
   readonly dirty = signal(false);
+  readonly ready = signal(false);
 
   readonly derating = computed(() => computeGeneral(this.state().general));
   readonly rowResults = computed(() => {
@@ -39,18 +40,22 @@ export class LvStore {
   }
 
   async loadLatest(): Promise<void> {
-    const list = await this.repo.list('lv-cable-sizing');
-    if (!list.length) {
-      this.init();
-      return;
+    try {
+      const list = await this.repo.list('lv-cable-sizing');
+      if (!list.length) {
+        this.init();
+        return;
+      }
+      const stored = await this.repo.get<LvState>(list[0].id);
+      if (!stored) return;
+      this.projectId.set(stored.id);
+      this.state.set(stored.data);
+      this.history.reset(stored.data);
+      this.syncHistory();
+      this.dirty.set(false);
+    } finally {
+      this.ready.set(true);
     }
-    const stored = await this.repo.get<LvState>(list[0].id);
-    if (!stored) return;
-    this.projectId.set(stored.id);
-    this.state.set(stored.data);
-    this.history.reset(stored.data);
-    this.syncHistory();
-    this.dirty.set(false);
   }
 
   patch(partial: Partial<LvState>): void {

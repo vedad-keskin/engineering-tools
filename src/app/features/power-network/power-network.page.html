@@ -46,7 +46,9 @@
         <app-button variant="primary" [label]="'power.addNode' | transloco" icon="plus" (clicked)="add()" />
       </div>
     </div>
-    @if (!store.state().nodes.length) {
+    @if (!store.ready()) {
+      <app-skeleton-table [columns]="7" [rows]="6" [label]="'common.loading' | transloco" />
+    } @else if (!store.state().nodes.length) {
       <div class="panel"><app-empty-state [title]="'power.emptyTitle' | transloco" [body]="'power.emptyBody' | transloco" /></div>
     } @else {
       <div class="tablewrap">
@@ -95,7 +97,9 @@
   </app-tab>
 
   <app-tab value="schedule" [label]="'power.tabSchedule' | transloco" [badge]="store.loads().length">
-    @if (!store.loads().length) {
+    @if (!store.ready()) {
+      <app-skeleton-table [columns]="5" [rows]="6" [label]="'common.loading' | transloco" />
+    } @else if (!store.loads().length) {
       <div class="panel"><app-empty-state [title]="'power.emptyTitle' | transloco" [body]="'power.emptyBody' | transloco" /></div>
     } @else {
       <div class="tablewrap">

@@ -10,7 +10,7 @@ import { NumPipe } from '../../shared/num.pipe';
 import { PrintService, escapeHtml } from '../../core/export/print.service';
 import { downloadCsv, downloadJson, pickJsonFile, readJsonFile } from '../../core/export/file-export';
 import { ShortcutsService } from '../../core/shortcuts.service';
-import { Button, ConfirmService, Dialog, Icon, Progress, Tab, Tabs, ToastService } from '../../ui';
+import { Button, ConfirmService, Dialog, Icon, Progress, SkeletonTable, Tab, Tabs, ToastService } from '../../ui';
 import { TYPE_FIELDS, TYPE_META, type NodeType, type PowerNode } from './engine/data';
 import { PowerStore } from './power.store';
 import { NetworkDiagramComponent } from './network-diagram';
@@ -34,6 +34,7 @@ import { CategoryChart } from './category-chart';
     NumPipe,
     NetworkDiagramComponent,
     CategoryChart,
+    SkeletonTable,
   ],
   providers: [PowerStore],
   templateUrl: './power-network.page.html',
